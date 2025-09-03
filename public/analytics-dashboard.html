@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sales & Billing Dashboard</title>
+  <style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 2rem;
+        background-color: #f9f9f9;
+      }
+      
+      h1, h2 {
+        margin-bottom: 1rem;
+      }
+      
+      #summary-cards {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      
+      .card {
+        background-color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        font-weight: bold;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+      }
+      
+      th, td {
+        border: 1px solid #ccc;
+        padding: 0.75rem;
+        text-align: left;
+      }
+      
+      thead {
+        background-color: #f4f4f4;
+      }
+      
+  </style>
+</head>
+<body>
+  <h1>📊 Sales & Billing Dashboard</h1>
+
+  <div id="summary-cards">
+    <div class="card">Total Revenue: ₹<span id="total-revenue">0</span></div>
+    <div class="card">Total Spend: ₹<span id="total-spend">0</span></div>
+    <div class="card">Total Profit: ₹<span id="total-profit">0</span></div>
+  </div>
+
+  <h2>🛒 Sales</h2>
+  <table id="sales-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity Sold</th>
+        <th>Sale Price</th>
+        <th>Total Revenue</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>🧾 Bills</h2>
+  <table id="bills-table">
+    <thead>
+      <tr>
+        <th>Bill ID</th>
+        <th>Customer</th>
+        <th>Amount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module" src="/src/analytics-dashboard.js"></script>
+</body>
+</html>

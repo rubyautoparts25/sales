@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Product</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 2rem;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    form {
+      max-width: 600px;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    input[disabled] {
+      background-color: #eee;
+      color: #555;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.2rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Edit Product</h1>
+  <form id="editForm">
+    <label>Name</label>
+    <input type="text" id="name" />
+
+    <label>Variant</label>
+    <input type="text" id="variant" />
+
+    <label>Class</label>
+    <input type="text" id="class" />
+
+    <label>Brand</label>
+    <input type="text" id="brand" />
+
+    <label>Quantity</label>
+    <input type="number" id="quantity" />
+
+    <label>Price</label>
+    <input type="number" step="0.01" id="price" />
+
+    <label>Expiry Date</label>
+    <input type="date" id="expiry" />
+
+    <label>Shelf Code</label>
+    <input type="text" id="shelf" />
+
+    <label>Barcode (locked)</label>
+    <input type="text" id="barcode" disabled />
+
+    <button type="submit">Update Product</button>
+  </form>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://vhltvlfgauerqltntzvs.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
+    );
+
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+
+    async function loadProduct() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+
+      if (error || !data) {
+        alert("Product not found.");
+        console.error(error);
+        return;
+      }
+
+      document.getElementById('name').value = data.name;
+      document.getElementById('variant').value = data.variant;
+      document.getElementById('class').value = data.class;
+      document.getElementById('brand').value = data.brand;
+      document.getElementById('quantity').value = data.quantity;
+      document.getElementById('price').value = data.price;
+      document.getElementById('expiry').value = data.expiry_date || '';
+      document.getElementById('shelf').value = data.shelf_code || '';
+      document.getElementById('barcode').value = data.barcode;
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const updated = {
+        name: document.getElementById('name').value.trim(),
+        variant: document.getElementById('variant').value.trim(),
+        class: document.getElementById('class').value.trim(),
+        brand: document.getElementById('brand').value.trim(),
+        quantity: parseInt(document.getElementById('quantity').value),
+        price: parseFloat(document.getElementById('price').value),
+        expiry_date: document.getElementById('expiry').value || null,
+        shelf_code: document.getElementById('shelf').value.trim()
+      };
+
+      const { error } = await supabase
+        .from('products')
+        .update(updated)
+        .eq('id', productId);
+
+      if (error) {
+        console.error("Update error:", error);
+        alert("Failed to update product.");
+      } else {
+        alert("✅ Product updated successfully.");
+        window.location.href = '/'; // Redirect back to main page
+      }
+    });
+
+    loadProduct();
+  </script>
+</body>
+</html>
