@@ -2,84 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inventory</title>
   <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    form {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .form-row input,
+    .form-row select {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    #searchInput {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      width: 100%;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
     #inventoryTable {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
-      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
     }
-    #inventoryTable th, #inventoryTable td {
+    #inventoryTable th,
+    #inventoryTable td {
       border: 1px solid #ccc;
-      padding: 0.75rem;
+      padding: 0.4rem 0.6rem;
       text-align: left;
     }
     #inventoryTable th {
-      background-color: #f4f4f4;
+      background-color: #eee;
       font-weight: 600;
     }
     #inventoryTable tr:hover {
       background-color: #f9f9f9;
     }
     #inventoryTable button {
-      padding: 0.4rem 0.6rem;
-      margin-right: 0.3rem;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      margin-right: 0.2rem;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.9rem;
-    }
-    #inventoryTable button:hover {
-      opacity: 0.85;
     }
     .edit-btn {
-      background-color: #4CAF50;
-      color: white;
+      background-color: #333;
+      color: #fff;
     }
     .delete-btn {
-      background-color: #f44336;
-      color: white;
+      background-color: #999;
+      color: #fff;
     }
   </style>
   <script>
     function checkPassword() {
-      const password = prompt("Enter passcode to access analytics:");
-      if (password === "caliberparts2025") {
-        window.location.href = "billing.html";
-      } else {
-        alert("Incorrect password. Access denied.");
+      const password=prompt("Enter passcode to access analytics:")
+      if(password==="caliberparts2025") {
+        window.location.href="billing.html"
+      }
+      else {
+        alert("Incorrect password. Access denied.")
       }
     }
+    function checkMetrics(){
+      const password=prompt("Enter passcode to access metrics:")
+      if(password==="caliberparts2025"){
+        window.location.href="metrics.html"
+      }else{
+        alert("Incorrect password. Access denied.")
+      }
+    }
+    
   </script>
 </head>
 <body>
+  <h1>General Automotives</h1>
+  <h2>Inventory Manager</h2>
   <form id="productForm">
-    <input type="text" id="name" placeholder="Part Name" required />
-    <input type="text" id="variant" placeholder="Variant" required />
-
-    <label for="class_of_product">Class of Product</label>
-    <select id="class_of_product" required>
-      <option value="">Select class</option>
-      <option value="Service">Service</option>
-      <option value="Suspension">Suspension</option>
-      <option value="Clutch">Clutch</option>
-      <option value="Brake">Brake</option>
-      <option value="Electronic">Electronic</option>
-      <option value="Engine">Engine</option>
-      <option value="Belts and pulleys">Belts and pulleys</option>
-      <option value="Other">Other</option>
-    </select>
-
-    <input type="text" id="brand" placeholder="Brand" required />
-    <input type="number" id="quantity" placeholder="Quantity" required />
-    <input type="number" id="price" placeholder="Price" step="0.01" required />
-    <input type="date" id="expiry" placeholder="Expiry Date (optional)" />
-    <input type="text" id="shelf" placeholder="Shelf Code" required />
-    <button type="submit">Add to Inventory</button>
+    <div class="form-row">
+      <input type="text" id="name" placeholder="Part Name" required>
+      <input type="text" id="variant" placeholder="Variant" required>
+    </div>
+    <div class="form-row">
+      <select id="class_of_product" required>
+        <option value="">Class</option>
+        <option value="Service">Service</option>
+        <option value="Suspension">Suspension</option>
+        <option value="Clutch">Clutch</option>
+        <option value="Brake">Brake</option>
+        <option value="Electronic">Electronic</option>
+        <option value="Engine">Engine</option>
+        <option value="Belts and pulleys">Belts and pulleys</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="text" id="brand" placeholder="Brand" required>
+    </div>
+    <div class="form-row">
+      <input type="number" id="quantity" placeholder="Qty" required>
+      <input type="number" id="price" placeholder="Price" step="0.01" required>
+    </div>
+    <div class="form-row">
+      <input type="date" id="expiry" placeholder="Expiry">
+      <input type="text" id="shelf" placeholder="Shelf Code" required>
+    </div>
+    <button type="submit">Add</button>
   </form>
-  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()" style="margin-top:1rem; width:100%; padding:0.5rem; font-size:1rem;" />
+  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
   <table id="inventoryTable">
     <thead>
       <tr>
@@ -87,25 +151,24 @@
         <th>Variant</th>
         <th>Class</th>
         <th>Brand</th>
-        <th>Quantity</th>  
-        <th>Price</th> 
-        <th>Total Price</th>   
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
         <th>Shelf</th>
         <th>Status</th>
+        <th>Date Added</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
-
   <h2>Generated Barcode</h2>
   <svg id="barcode"></svg><br>
   <button id="downloadBarcode">Download Barcode</button>
   <button id="printBarcode">Print Barcode</button>
-
   <br><br>
-  <button onclick="checkPassword()">View Sales & Billing</button>
-
+  <button onclick="checkPassword()">Go to Billing</button>
+  <button onclick="checkMetrics()">View Metrics</button>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

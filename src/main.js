@@ -17,7 +17,6 @@ window.filterInventory = function () {
     row.style.display = text.includes(query) ? '' : 'none'
   })
 }
-// ✅ Handle form submit
 document.getElementById('productForm').addEventListener('submit',async(e)=>{
   e.preventDefault()
   const form=e.target
@@ -51,7 +50,6 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
       const existingProduct=existing[0]
 
       if(existingProduct.price===price){
-        // ✅ Keep same barcode → update only
         barcode=existingProduct.barcode
         const {error:updateError}=await supabase
           .from('products')
@@ -63,7 +61,6 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
           .eq('id',existingProduct.id)
         if(updateError) throw updateError
       }else{
-        // ✅ Price changed → insert new row with new barcode
         barcode=crypto.randomUUID()
         const {error:insertError}=await supabase.from('products').insert([{
           name,variant,class_of_product:classOfProduct,brand,
@@ -73,7 +70,6 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
         if(insertError) throw insertError
       }
     }else{
-      // ✅ Completely new product
       barcode=crypto.randomUUID()
       const {error:insertError}=await supabase.from('products').insert([{
         name,variant,class_of_product:classOfProduct,brand,
@@ -93,36 +89,45 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
   }
 })
 
-// ✅ Load inventory
 async function loadInventory(){
-  const{data,error}=await supabase.from('products').select('*')
+  const { data, error } = await supabase.from('products').select('*')
   if(error){
-    console.error("Error loading inventory:",error)
+    console.error("Error loading inventory:", error)
     return
   }
 
-  const tbody=document.querySelector('#inventoryTable tbody')
-  tbody.innerHTML=''
+  const tbody = document.querySelector('#inventoryTable tbody')
+  tbody.innerHTML = ''
 
-  data.forEach(product=>{
-    const totalPrice=(product.quantity*product.price).toFixed(2)
-    const row=document.createElement('tr')
-    row.innerHTML=`
+  data.forEach(product => {
+    const totalPrice = (product.quantity * product.price).toFixed(2)
+    const formattedDate = product.date_added
+      ? new Date(product.date_added).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      : '-'
+
+    const row = document.createElement('tr')
+    row.innerHTML = `
       <td>${product.name}</td>
       <td>${product.variant}</td>
-      <td>${product.class_of_product||'-'}</td>
+      <td>${product.class_of_product || '-'}</td>
       <td>${product.brand}</td>
       <td>${product.quantity}</td>
       <td>${product.price}</td>
-      <td>${totalPrice}</td>   <!-- ✅ new total price column -->
-      <td>${product.shelf_code||'-'}</td>
+      <td>${totalPrice}</td>
+      <td>${product.shelf_code || '-'}</td>
       <td>${product.status}</td>
+      <td>${formattedDate}</td>
       <td>
         <button onclick="editProduct('${product.id}')">Edit</button>
         <button onclick="deleteProduct('${product.id}')">Delete</button>
         <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
         ${
-          product.status==="on_hold"
+          product.status === "on_hold"
           ? `<button onclick="markActive('${product.id}')">Mark Active</button>`
           : `<button onclick="setOnHold('${product.id}')">Set On Hold</button>`
         }
@@ -132,7 +137,7 @@ async function loadInventory(){
   })
 }
 
-// ✅ Delete product
+
 window.deleteProduct=async function(id){
   if(!confirm("Are you sure you want to delete this part?")) return
   const{error}=await supabase
@@ -148,7 +153,6 @@ window.deleteProduct=async function(id){
   }
 }
 
-// ✅ Edit product
 window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
 }
@@ -253,7 +257,6 @@ window.markActive = async function (id) {
   }
 }
 
-// ✅ Set product back to on hold
 window.setOnHold = async function (id) {
   const { error } = await supabase
     .from('products')

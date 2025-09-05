@@ -1,44 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Billing Page</title>
+  <meta charset="UTF-8">
+  <title>Billing</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      color: #222;
+    }
+    form, .cart-section {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    input, button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.6rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #333;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    #cart-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+    #cart-table th, #cart-table td {
+      border: 1px solid #ccc;
+      padding: 0.6rem;
+      text-align: left;
+    }
+    #grandTotal {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #000;
+    }
+  </style>
 </head>
 <body>
   <h1>Billing</h1>
-
-  <!-- Customer form -->
   <form id="customerForm">
     <input type="text" id="customerName" placeholder="Customer Name" required>
     <input type="text" id="customerPhone" placeholder="Customer Phone">
     <button type="submit">Set Customer</button>
   </form>
   <p id="customerDisplay"></p>
-
-  <!-- Barcode input -->
-  <input type="text" id="barcodeInput" placeholder="Scan or Enter Barcode">
-  <input type="number" id="discountInput" placeholder="Discount %" min="0" max="100">
-
-  <!-- Cart table -->
-  <table border="1" id="cart-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Discount</th>
-        <th>Final Price</th>
-        <th>Qty</th>
-        <th>Line Total</th>
-        <th>Remove</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <h3>Grand Total: ₹<span id="grandTotal">0</span></h3>
-
-  <button id="finalizeBill">Finalize Bill</button>
-  <button id="printBill">Print Bill</button>
-
-  <!-- External JS -->
+  <div class="cart-section">
+    <input type="text" id="barcodeInput" placeholder="Scan or Enter Barcode">
+    <input type="number" id="discountInput" placeholder="Discount %" min="0" max="100">
+    <table id="cart-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Discount</th>
+          <th>Final Price</th>
+          <th>Qty</th>
+          <th>Line Total</th>
+          <th>Remove</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3>Grand Total: ₹<span id="grandTotal">0</span></h3>
+    <button id="finalizeBill">Finalize Bill</button>
+    <button id="printBill">Print Bill</button>
+  </div>
   <script type="module" src="./src/billing.js"></script>
 </body>
 </html>

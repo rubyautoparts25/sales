@@ -7,6 +7,7 @@ const supabase=createClient(
 
 let cart=[]
 let customer={}
+let scanLock=false
 
 document.getElementById('customerForm').addEventListener('submit',e=>{
   e.preventDefault()
@@ -18,20 +19,33 @@ document.getElementById('customerForm').addEventListener('submit',e=>{
     `Customer: ${customer.name} (${customer.phone||''})`
 })
 
-document.getElementById('barcodeInput').addEventListener('keydown',async e=>{
-  if(e.key==="Enter"){
-    e.preventDefault()
-    const code=e.target.value.trim()
-    if(!code)return
+document.getElementById('barcodeInput').addEventListener('input',e=>{
+  const code=e.target.value.trim()
+  if(code.length<6 || scanLock) return
 
-    console.log("Scanning barcode:", code)
+  scanLock=true
+  setTimeout(()=>{scanLock=false},300)
 
-    const {data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
-    if(error||!data){alert("Product not found");return}
+  addScannedItem(code)
+  e.target.value=""
+})
 
-    const discount=parseFloat(document.getElementById('discountInput').value)||0
-    const finalPrice=data.price-(data.price*discount/100)
+async function addScannedItem(code){
+  const {data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
+  if(error||!data){
+    alert("Product not found")
+    return
+  }
 
+  const discount=parseFloat(document.getElementById('discountInput').value)||0
+  const finalPrice=data.price-(data.price*discount/100)
+
+  const existingIndex=cart.findIndex(item=>item.id===data.id)
+
+  if(existingIndex!==-1){
+    cart[existingIndex].qty+=1
+  }
+  else{
     cart.push({
       id:data.id,
       name:data.name,
@@ -40,11 +54,10 @@ document.getElementById('barcodeInput').addEventListener('keydown',async e=>{
       finalPrice,
       qty:1
     })
-
-    renderCart()
-    e.target.value=""
   }
-})
+
+  renderCart()
+}
 
 function renderCart(){
   const tbody=document.querySelector('#cart-table tbody')
@@ -52,13 +65,14 @@ function renderCart(){
   let total=0
 
   cart.forEach((item,idx)=>{
-    const row=document.createElement('tr')
     const lineTotal=item.finalPrice*item.qty
     total+=lineTotal
+    const row=document.createElement('tr')
     row.innerHTML=`
       <td>${item.name}</td>
       <td>${item.price}</td>
-      <td>${item.discount}%</td>
+      <td><input type="number" value="${item.discount}" min="0" max="100" onchange="updateDiscount(${idx},this.value)"></td>
+
       <td>${item.finalPrice.toFixed(2)}</td>
       <td><input type="number" value="${item.qty}" min="1" onchange="updateQty(${idx},this.value)"></td>
       <td>${lineTotal.toFixed(2)}</td>
@@ -74,6 +88,13 @@ window.updateQty=(idx,val)=>{
   cart[idx].qty=parseInt(val)
   renderCart()
 }
+window.updateDiscount=(idx,val)=>{
+  const discount=parseFloat(val)||0
+  const item=cart[idx]
+  item.discount=discount
+  item.finalPrice=item.price-(item.price*discount/100)
+  renderCart()
+}
 
 window.removeItem=idx=>{
   cart.splice(idx,1)
@@ -81,58 +102,96 @@ window.removeItem=idx=>{
 }
 
 document.getElementById('finalizeBill').addEventListener('click',async()=>{
-  if(!customer.name){alert("Set customer first");return}
-  if(cart.length===0){alert("Cart is empty");return}
+  if(!customer.name){
+    alert("Set customer first")
+    return
+  }
+  if(cart.length===0){
+    alert("Cart is empty")
+    return
+  }
 
   const total=cart.reduce((sum,i)=>sum+(i.finalPrice*i.qty),0)
 
   const {data:bill,error:billErr}=await supabase.from('bills').insert([{
     customer_name: customer.name,
-    customer_phone: customer.phone,   
+    customer_phone: customer.phone,
     total_amount: total
   }]).select().single()
 
-  if(billErr){console.error("Bill error:",billErr);alert("Failed to create bill.");return}
+  if(billErr){
+    console.error("Bill error:",billErr)
+    alert("Failed to create bill.")
+    return
+  }
 
-  for (const item of cart) {
-    const { error: saleError } = await supabase.from("sales").insert({
+  for(const item of cart){
+    const {error:saleError}=await supabase.from("sales").insert({
       product_id: item.id,
       quantity_sold: item.qty,
-      bill_id: bill.id,             // ✅ link sale to bill
-      price_at_sale: item.price    // ✅ store product price at time of sale
+      bill_id: bill.id,
+      price_at_sale: item.price
     })
-    if (saleError) console.error("Sale insert error:", saleError)
+    if(saleError) console.error("Sale insert error:",saleError)
   }
 
   window.latestBill={...bill,items:[...cart],customer:{...customer}}
-
   alert("Bill finalized. ID: "+bill.id)
-
   cart=[]
   renderCart()
   document.getElementById('grandTotal').textContent="0"
 })
 
 document.getElementById('printBill').addEventListener('click',()=>{
-  if(!window.latestBill){alert("No bill to print");return}
+  if(!window.latestBill){
+    alert("No bill to print")
+    return
+  }
 
   const bill=window.latestBill
+  const now=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})
+ 
+
   let html=`
-    <h2>Shop Name</h2>
-    <p>Customer: ${bill.customer.name} (${bill.customer.phone||""})</p>
-    <p>Bill ID: ${bill.id}</p>
-    <table border="1" cellspacing="0" cellpadding="5">
-      <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+    <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#000;padding:1rem;">
+      <h2 style="text-align:center;margin-bottom:0.5rem;">General Automotives</h2>
+      <p style="text-align:center;margin-top:0;">Purchase Bill</p>
+      <hr>
+      <p><strong>Date & Time:</strong> ${now}</p>
+      <p><strong>Customer:</strong> ${bill.customer.name} (${bill.customer.phone||"-"})</p>
+
+      <p><strong>Bill ID:</strong> ${bill.id}</p>
+      <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
+        <thead>
+          <tr>
+            <th style="border:1px solid #ccc;padding:0.5rem;text-align:left;">Item</th>
+            <th style="border:1px solid #ccc;padding:0.5rem;text-align:right;">Qty</th>
+            <th style="border:1px solid #ccc;padding:0.5rem;text-align:right;">Price</th>
+            <th style="border:1px solid #ccc;padding:0.5rem;text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
   `
+
   bill.items.forEach(it=>{
-    html+=`<tr>
-      <td>${it.name}</td>
-      <td>${it.qty}</td>
-      <td>${it.finalPrice.toFixed(2)}</td>
-      <td>${(it.finalPrice*it.qty).toFixed(2)}</td>
-    </tr>`
+    html+=`
+      <tr>
+        <td style="border:1px solid #ccc;padding:0.5rem;">${it.name}</td>
+        <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">${it.qty}</td>
+        <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">₹${it.finalPrice.toFixed(2)}</td>
+        <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">₹${(it.finalPrice*it.qty).toFixed(2)}</td>
+      </tr>
+    `
   })
-  html+=`</table><h3>Grand Total: ₹${bill.total_amount}</h3>`
+
+  html+=`
+        </tbody>
+      </table>
+      <h3 style="text-align:right;margin-top:1rem;">Grand Total: ₹${bill.total_amount}</h3>
+      <hr>
+      <p style="text-align:center;">Thank you for your purchase</p>
+    </div>
+  `
 
   const w=window.open("","PrintBill","width=600,height=600")
   w.document.write(html)
