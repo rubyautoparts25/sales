@@ -1,138 +1,270 @@
-import './style.css';
-import { createClient } from '@supabase/supabase-js';
-import JsBarcode from 'jsbarcode';
+import './style.css'
+import { createClient } from '@supabase/supabase-js'
+import JsBarcode from 'jsbarcode'
 
-const supabase = createClient(
+const supabase=createClient(
   'https://vhltvlfgauerqltntzvs.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
-);
+)
 
-// 🧾 Add product to inventory
-document.getElementById('productForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = e.target;
+let currentBarcode=null
+window.filterInventory = function () {
+  const query = document.getElementById('searchInput').value.toLowerCase()
+  const rows = document.querySelectorAll('#inventoryTable tbody tr')
 
-  const name = form.name.value.trim();
-  const variant = form.variant.value.trim();
-  const classOfProduct = form.class.value.trim();
-  const brand = form.brand.value.trim();
-  const quantity = parseInt(form.quantity.value);
-  const price = parseFloat(form.price.value);
-  const expiryDate = form.expiry.value || null;
-  const shelf = form.shelf.value.trim();
-  const barcode = crypto.randomUUID();
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase()
+    row.style.display = text.includes(query) ? '' : 'none'
+  })
+}
+// ✅ Handle form submit
+document.getElementById('productForm').addEventListener('submit',async(e)=>{
+  e.preventDefault()
+  const form=e.target
+  const name=form.name.value.trim()
+  const variant=form.variant.value.trim()
+  const classOfProduct=form.class_of_product.value.trim()
+  const brand=form.brand.value.trim()
+  const quantity=parseInt(form.quantity.value)
+  const price=parseFloat(form.price.value)
+  const expiryDate=form.expiry.value||null
+  const shelf=form.shelf.value.trim()
 
-  if (!name || !variant || !classOfProduct || !brand || isNaN(quantity) || isNaN(price) || !shelf) {
-    alert("Please fill in all required fields correctly.");
-    return;
+  if(!name||!variant||!classOfProduct||!brand||isNaN(quantity)||isNaN(price)||!shelf){
+    alert("Please fill in all required fields correctly.")
+    return
   }
 
-  try {
-    const { data: existing, error: fetchError } = await supabase
+  try{
+    const{data:existing,error}=await supabase
       .from('products')
-      .select('id')
-      .eq('barcode', barcode);
+      .select('*')
+      .eq('name',name)
+      .eq('variant',variant)
+      .eq('brand',brand)
+      .eq('class_of_product',classOfProduct)
 
-    if (fetchError) throw fetchError;
-    if (existing.length > 0) {
-      alert("Duplicate barcode detected. Please try again.");
-      return;
+    if(error) throw error
+
+    let barcode
+    if(existing.length>0){
+      const existingProduct=existing[0]
+
+      if(existingProduct.price===price){
+        // ✅ Keep same barcode → update only
+        barcode=existingProduct.barcode
+        const {error:updateError}=await supabase
+          .from('products')
+          .update({
+            quantity:existingProduct.quantity+quantity,
+            shelf_code:shelf,
+            expiry_date:expiryDate
+          })
+          .eq('id',existingProduct.id)
+        if(updateError) throw updateError
+      }else{
+        // ✅ Price changed → insert new row with new barcode
+        barcode=crypto.randomUUID()
+        const {error:insertError}=await supabase.from('products').insert([{
+          name,variant,class_of_product:classOfProduct,brand,
+          quantity,price,expiry_date:expiryDate,shelf_code:shelf,
+          barcode,status:'on_hold'
+        }])
+        if(insertError) throw insertError
+      }
+    }else{
+      // ✅ Completely new product
+      barcode=crypto.randomUUID()
+      const {error:insertError}=await supabase.from('products').insert([{
+        name,variant,class_of_product:classOfProduct,brand,
+        quantity,price,expiry_date:expiryDate,shelf_code:shelf,
+        barcode,status:'on_hold'
+      }])
+      if(insertError) throw insertError
     }
 
-    const { error: insertError } = await supabase.from('products').insert([{
-      name,
-      variant,
-      class: classOfProduct,
-      brand,
-      quantity,
-      price,
-      expiry_date: expiryDate,
-      shelf_code: shelf,
-      barcode,
-      status: 'on_hold'
-    }]);
-
-    if (insertError) throw insertError;
-
-    JsBarcode("#barcode", barcode, { format: "CODE128" });
-    alert(`✅ "${name}" added to inventory (on hold).`);
-    form.reset();
-    loadInventory();
-  } catch (err) {
-    console.error("Insert error:", err);
-    alert("Something went wrong while adding the product.");
+    renderBarcode(barcode)
+    alert(`"${name}" added/updated in inventory.`)
+    form.reset()
+    loadInventory()
+  }catch(err){
+    console.error("Insert error:",err)
+    alert("Something went wrong while adding the product.")
   }
-});
+})
 
-// 📦 Load inventory table
-async function loadInventory() {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('status', 'on_hold');
-
-  if (error) {
-    console.error("Error loading inventory:", error);
-    return;
+// ✅ Load inventory
+async function loadInventory(){
+  const{data,error}=await supabase.from('products').select('*')
+  if(error){
+    console.error("Error loading inventory:",error)
+    return
   }
 
-  const tbody = document.querySelector('#inventoryTable tbody');
-  tbody.innerHTML = '';
+  const tbody=document.querySelector('#inventoryTable tbody')
+  tbody.innerHTML=''
 
-  data.forEach(product => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
+  data.forEach(product=>{
+    const totalPrice=(product.quantity*product.price).toFixed(2)
+    const row=document.createElement('tr')
+    row.innerHTML=`
       <td>${product.name}</td>
       <td>${product.variant}</td>
+      <td>${product.class_of_product||'-'}</td>
       <td>${product.brand}</td>
-      <td>${product.shelf_code || '-'}</td>
+      <td>${product.quantity}</td>
+      <td>${product.price}</td>
+      <td>${totalPrice}</td>   <!-- ✅ new total price column -->
+      <td>${product.shelf_code||'-'}</td>
       <td>${product.status}</td>
       <td>
-        <button class="edit-btn" onclick="location.href='edit.html?id=${product.id}'">✏️ Edit</button>
-
-        <button onclick="deleteProduct('${product.id}')">🗑️</button>
+        <button onclick="editProduct('${product.id}')">Edit</button>
+        <button onclick="deleteProduct('${product.id}')">Delete</button>
+        <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
+        ${
+          product.status==="on_hold"
+          ? `<button onclick="markActive('${product.id}')">Mark Active</button>`
+          : `<button onclick="setOnHold('${product.id}')">Set On Hold</button>`
+        }
       </td>
-    `;
-    tbody.appendChild(row);
-  });
+    `
+    tbody.appendChild(row)
+  })
 }
 
-// 🗑️ Delete product
-window.deleteProduct = async function(id) {
-  if (!confirm("Are you sure you want to delete this part?")) return;
-
-  const { error } = await supabase
+// ✅ Delete product
+window.deleteProduct=async function(id){
+  if(!confirm("Are you sure you want to delete this part?")) return
+  const{error}=await supabase
     .from('products')
     .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error("Delete error:", error);
-    alert("Failed to delete part.");
-  } else {
-    alert("Part removed.");
-    loadInventory();
+    .eq('id',id)
+  if(error){
+    console.error("Delete error:",error)
+    alert("Failed to delete part.")
+  }else{
+    alert("Part removed.")
+    loadInventory()
   }
-};
+}
 
-// ✏️ Edit shelf code
-window.editProduct = async function(id) {
-  const newShelf = prompt("Enter new shelf code:");
-  if (!newShelf) return;
+// ✅ Edit product
+window.editProduct=function(id){
+  window.location.href=`edit.html?id=${id}`
+}
 
+function renderBarcode(barcode){
+  if(!barcode) return
+  JsBarcode("#barcode",barcode,{
+    format:"CODE128",
+    lineColor:"#000",
+    width:2,
+    height:40,
+    displayValue:true
+  })
+  currentBarcode=barcode
+  document.getElementById("downloadBarcode").style.display="inline-block"
+  document.getElementById("printBarcode").style.display="inline-block"
+}
+window.renderBarcode=renderBarcode
+
+document.getElementById('downloadBarcode').addEventListener('click',()=>{
+  if(!currentBarcode) return alert("No barcode to download.")
+  const svg=document.getElementById('barcode')
+  const serializer=new XMLSerializer()
+  const svgBlob=new Blob([serializer.serializeToString(svg)],{type:"image/svg+xml;charset=utf-8"})
+  const url=URL.createObjectURL(svgBlob)
+  const a=document.createElement('a')
+  a.href=url
+  a.download=`barcode-${currentBarcode}.svg`
+  a.click()
+  URL.revokeObjectURL(url)
+})
+
+document.getElementById('printBarcode').addEventListener('click',()=>{
+  if(!currentBarcode) return alert("No barcode to print.")
+  const printContent=document.getElementById('barcode').outerHTML
+  const printWindow=window.open('', '', 'width=400,height=200')
+  printWindow.document.write('<html><head><title>Print Barcode</title></head><body>')
+  printWindow.document.write(printContent)
+  printWindow.document.write('</body></html>')
+  printWindow.document.close()
+  printWindow.print()
+})
+
+const nameInput=document.getElementById('name')
+const suggestions=document.createElement('ul')
+suggestions.id='suggestions'
+suggestions.style.position='absolute'
+suggestions.style.background='white'
+suggestions.style.border='1px solid #ccc'
+suggestions.style.listStyle='none'
+suggestions.style.padding='0'
+suggestions.style.margin='0'
+suggestions.style.width=nameInput.offsetWidth+'px'
+nameInput.parentNode.appendChild(suggestions)
+
+nameInput.addEventListener('input',async()=>{
+  const query=nameInput.value.trim()
+  suggestions.innerHTML=''
+  if(query.length<1) return
+
+  const {data,error}=await supabase
+    .from('products')
+    .select('*')
+    .or(`name.ilike.%${query}%,variant.ilike.%${query}%`)
+    .limit(5)
+
+  if(error){
+    console.error("Suggestion error:",error)
+    return
+  }
+
+  data.forEach(product=>{
+    const li=document.createElement('li')
+    li.textContent=`${product.name} (${product.variant||''})`
+    li.style.padding='5px'
+    li.style.cursor='pointer'
+    li.addEventListener('click',()=>{
+      nameInput.value=product.name
+      document.getElementById('variant').value=product.variant||''
+      document.getElementById('class_of_product').value=product.class_of_product?.trim()||''
+      document.getElementById('brand').value=product.brand||''
+      document.getElementById('quantity').value=product.quantity||0
+      document.getElementById('price').value=product.price||0
+      document.getElementById('shelf').value=product.shelf_code||''
+      document.getElementById('expiry').value=product.expiry_date||''
+      suggestions.innerHTML=''
+    })
+    suggestions.appendChild(li)
+  })
+})
+window.markActive = async function (id) {
   const { error } = await supabase
     .from('products')
-    .update({ shelf_code: newShelf })
-    .eq('id', id);
+    .update({ status: 'active', activated_at: new Date().toISOString() })
+    .eq('id', id)
 
   if (error) {
-    console.error("Update error:", error);
-    alert("Failed to update shelf.");
+    console.error("Error marking active:", error)
+    alert("Failed to mark active.")
   } else {
-    alert("Shelf updated.");
-    loadInventory();
+    loadInventory()
   }
-};
+}
 
-// 🔄 Load inventory on page load
-window.addEventListener('DOMContentLoaded', loadInventory);
+// ✅ Set product back to on hold
+window.setOnHold = async function (id) {
+  const { error } = await supabase
+    .from('products')
+    .update({ status: 'on_hold' })
+    .eq('id', id)
+
+  if (error) {
+    console.error("Error setting on hold:", error)
+    alert("Failed to set on hold.")
+  } else {
+    loadInventory()
+  }
+}
+loadInventory()

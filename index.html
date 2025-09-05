@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Inventory</title>
   <style>
     #inventoryTable {
       width: 100%;
@@ -11,22 +11,18 @@
       margin-top: 1rem;
       font-family: 'Segoe UI', sans-serif;
     }
-  
     #inventoryTable th, #inventoryTable td {
       border: 1px solid #ccc;
       padding: 0.75rem;
       text-align: left;
     }
-  
     #inventoryTable th {
       background-color: #f4f4f4;
       font-weight: 600;
     }
-  
     #inventoryTable tr:hover {
       background-color: #f9f9f9;
     }
-  
     #inventoryTable button {
       padding: 0.4rem 0.6rem;
       margin-right: 0.3rem;
@@ -35,40 +31,36 @@
       cursor: pointer;
       font-size: 0.9rem;
     }
-  
     #inventoryTable button:hover {
       opacity: 0.85;
     }
-  
     .edit-btn {
       background-color: #4CAF50;
       color: white;
     }
-  
     .delete-btn {
       background-color: #f44336;
       color: white;
     }
   </style>
   <script>
-      function checkPassword() {
-        const password = prompt("Enter passcode to access analytics:");
-        if (password === "caliberparts2025") {
-          window.location.href = "analytics-dashboard.html";
-        } else {
-          alert("Incorrect password. Access denied.");
-        }
+    function checkPassword() {
+      const password = prompt("Enter passcode to access analytics:");
+      if (password === "caliberparts2025") {
+        window.location.href = "billing.html";
+      } else {
+        alert("Incorrect password. Access denied.");
       }
-      </script>
-   
+    }
+  </script>
 </head>
 <body>
   <form id="productForm">
     <input type="text" id="name" placeholder="Part Name" required />
     <input type="text" id="variant" placeholder="Variant" required />
-  
-    <label for="class">Class of Product</label>
-    <select id="class" required>
+
+    <label for="class_of_product">Class of Product</label>
+    <select id="class_of_product" required>
       <option value="">Select class</option>
       <option value="Service">Service</option>
       <option value="Suspension">Suspension</option>
@@ -79,7 +71,7 @@
       <option value="Belts and pulleys">Belts and pulleys</option>
       <option value="Other">Other</option>
     </select>
-  
+
     <input type="text" id="brand" placeholder="Brand" required />
     <input type="number" id="quantity" placeholder="Quantity" required />
     <input type="number" id="price" placeholder="Price" step="0.01" required />
@@ -87,38 +79,33 @@
     <input type="text" id="shelf" placeholder="Shelf Code" required />
     <button type="submit">Add to Inventory</button>
   </form>
+  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()" style="margin-top:1rem; width:100%; padding:0.5rem; font-size:1rem;" />
   <table id="inventoryTable">
     <thead>
       <tr>
         <th>Name</th>
         <th>Variant</th>
+        <th>Class</th>
         <th>Brand</th>
+        <th>Quantity</th>  
+        <th>Price</th> 
+        <th>Total Price</th>   
         <th>Shelf</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Rows will be injected by JS -->
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>
-          <button onclick="location.href='/edit.html?id=${product.id}'">✏️</button>
-
-          <button class="delete-btn" onclick="deleteProduct('123')">🗑️ Delete</button>
-        </td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <h2>Generated Barcode</h2>
-  <svg id="barcode"></svg>
+  <svg id="barcode"></svg><br>
+  <button id="downloadBarcode">Download Barcode</button>
+  <button id="printBarcode">Print Barcode</button>
+
+  <br><br>
   <button onclick="checkPassword()">View Sales & Billing</button>
 
-<script type="module" src="src/main.js"></script>  
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Billing Page</title>
+</head>
+<body>
+  <h1>Billing</h1>
+
+  <!-- Customer form -->
+  <form id="customerForm">
+    <input type="text" id="customerName" placeholder="Customer Name" required>
+    <input type="text" id="customerPhone" placeholder="Customer Phone">
+    <button type="submit">Set Customer</button>
+  </form>
+  <p id="customerDisplay"></p>
+
+  <!-- Barcode input -->
+  <input type="text" id="barcodeInput" placeholder="Scan or Enter Barcode">
+  <input type="number" id="discountInput" placeholder="Discount %" min="0" max="100">
+
+  <!-- Cart table -->
+  <table border="1" id="cart-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Discount</th>
+        <th>Final Price</th>
+        <th>Qty</th>
+        <th>Line Total</th>
+        <th>Remove</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3>Grand Total: ₹<span id="grandTotal">0</span></h3>
+
+  <button id="finalizeBill">Finalize Bill</button>
+  <button id="printBill">Print Bill</button>
+
+  <!-- External JS -->
+  <script type="module" src="../src/billing.js"></script>
+</body>
+</html>

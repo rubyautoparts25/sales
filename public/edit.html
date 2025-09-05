@@ -67,7 +67,17 @@
     <input type="text" id="variant" />
 
     <label>Class</label>
-    <input type="text" id="class" />
+    <select id="class" required>
+      <option value="">Select class</option>
+      <option value="Service">Service</option>
+      <option value="Suspension">Suspension</option>
+      <option value="Clutch">Clutch</option>
+      <option value="Brake">Brake</option>
+      <option value="Electronic">Electronic</option>
+      <option value="Engine">Engine</option>
+      <option value="Belts and pulleys">Belts and pulleys</option>
+      <option value="Other">Other</option>
+    </select>
 
     <label>Brand</label>
     <input type="text" id="brand" />
@@ -116,7 +126,7 @@
 
       document.getElementById('name').value = data.name;
       document.getElementById('variant').value = data.variant;
-      document.getElementById('class').value = data.class;
+      document.getElementById('class').value = data.class_of_product;
       document.getElementById('brand').value = data.brand;
       document.getElementById('quantity').value = data.quantity;
       document.getElementById('price').value = data.price;
@@ -131,13 +141,15 @@
       const updated = {
         name: document.getElementById('name').value.trim(),
         variant: document.getElementById('variant').value.trim(),
-        class: document.getElementById('class').value.trim(),
+        class_of_product: document.getElementById('class').value.trim(), 
         brand: document.getElementById('brand').value.trim(),
         quantity: parseInt(document.getElementById('quantity').value),
         price: parseFloat(document.getElementById('price').value),
         expiry_date: document.getElementById('expiry').value || null,
         shelf_code: document.getElementById('shelf').value.trim()
       };
+      
+      
 
       const { error } = await supabase
         .from('products')
