@@ -8,16 +8,22 @@ const supabase=createClient(
 )
 
 let currentBarcode=null
-window.filterInventory = function () {
-  const query = document.getElementById('searchInput').value.toLowerCase()
-  const rows = document.querySelectorAll('#inventoryTable tbody tr')
 
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase()
-    row.style.display = text.includes(query) ? '' : 'none'
+// --- Barcode generator (alphanumeric 8 chars) ---
+function generateBarcode() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase()
+}
+
+window.filterInventory=function(){
+  const query=document.getElementById('searchInput').value.toLowerCase()
+  const rows=document.querySelectorAll('#inventoryTable tbody tr')
+  rows.forEach(row=>{
+    const text=row.textContent.toLowerCase()
+    row.style.display=text.includes(query)?'':'none'
   })
 }
-document.getElementById('productForm').addEventListener('submit',async(e)=>{
+
+document.getElementById('productForm').addEventListener('submit',async e=>{
   e.preventDefault()
   const form=e.target
   const name=form.name.value.trim()
@@ -35,7 +41,7 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
   }
 
   try{
-    const{data:existing,error}=await supabase
+    const {data:existing,error}=await supabase
       .from('products')
       .select('*')
       .eq('name',name)
@@ -61,7 +67,7 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
           .eq('id',existingProduct.id)
         if(updateError) throw updateError
       }else{
-        barcode=crypto.randomUUID()
+        barcode=generateBarcode()
         const {error:insertError}=await supabase.from('products').insert([{
           name,variant,class_of_product:classOfProduct,brand,
           quantity,price,expiry_date:expiryDate,shelf_code:shelf,
@@ -70,7 +76,7 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
         if(insertError) throw insertError
       }
     }else{
-      barcode=crypto.randomUUID()
+      barcode=generateBarcode()
       const {error:insertError}=await supabase.from('products').insert([{
         name,variant,class_of_product:classOfProduct,brand,
         quantity,price,expiry_date:expiryDate,shelf_code:shelf,
@@ -90,36 +96,34 @@ document.getElementById('productForm').addEventListener('submit',async(e)=>{
 })
 
 async function loadInventory(){
-  const { data, error } = await supabase.from('products').select('*')
+  const {data,error}=await supabase.from('products').select('*')
   if(error){
-    console.error("Error loading inventory:", error)
+    console.error("Error loading inventory:",error)
     return
   }
 
-  const tbody = document.querySelector('#inventoryTable tbody')
-  tbody.innerHTML = ''
+  const tbody=document.querySelector('#inventoryTable tbody')
+  tbody.innerHTML=''
 
-  data.forEach(product => {
-    const totalPrice = (product.quantity * product.price).toFixed(2)
-    const formattedDate = product.date_added
-      ? new Date(product.date_added).toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
-      : '-'
+  data.forEach(product=>{
+    const totalPrice=(product.quantity*product.price).toFixed(2)
+    const formattedDate=product.date_added
+      ?new Date(product.date_added).toLocaleString('en-IN',{
+        timeZone:'Asia/Kolkata',
+        year:'numeric',month:'short',day:'numeric'
+      })
+      :'-'
 
-    const row = document.createElement('tr')
-    row.innerHTML = `
+    const row=document.createElement('tr')
+    row.innerHTML=`
       <td>${product.name}</td>
       <td>${product.variant}</td>
-      <td>${product.class_of_product || '-'}</td>
+      <td>${product.class_of_product||'-'}</td>
       <td>${product.brand}</td>
       <td>${product.quantity}</td>
       <td>${product.price}</td>
       <td>${totalPrice}</td>
-      <td>${product.shelf_code || '-'}</td>
+      <td>${product.shelf_code||'-'}</td>
       <td>${product.status}</td>
       <td>${formattedDate}</td>
       <td>
@@ -127,9 +131,9 @@ async function loadInventory(){
         <button onclick="deleteProduct('${product.id}')">Delete</button>
         <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
         ${
-          product.status === "on_hold"
-          ? `<button onclick="markActive('${product.id}')">Mark Active</button>`
-          : `<button onclick="setOnHold('${product.id}')">Set On Hold</button>`
+          product.status==="on_hold"
+          ?`<button onclick="markActive('${product.id}')">Mark Active</button>`
+          :`<button onclick="setOnHold('${product.id}')">Set On Hold</button>`
         }
       </td>
     `
@@ -137,13 +141,9 @@ async function loadInventory(){
   })
 }
 
-
 window.deleteProduct=async function(id){
   if(!confirm("Are you sure you want to delete this part?")) return
-  const{error}=await supabase
-    .from('products')
-    .delete()
-    .eq('id',id)
+  const {error}=await supabase.from('products').delete().eq('id',id)
   if(error){
     console.error("Delete error:",error)
     alert("Failed to delete part.")
@@ -188,7 +188,7 @@ document.getElementById('downloadBarcode').addEventListener('click',()=>{
 document.getElementById('printBarcode').addEventListener('click',()=>{
   if(!currentBarcode) return alert("No barcode to print.")
   const printContent=document.getElementById('barcode').outerHTML
-  const printWindow=window.open('', '', 'width=400,height=200')
+  const printWindow=window.open('','','width=400,height=200')
   printWindow.document.write('<html><head><title>Print Barcode</title></head><body>')
   printWindow.document.write(printContent)
   printWindow.document.write('</body></html>')
@@ -243,31 +243,33 @@ nameInput.addEventListener('input',async()=>{
     suggestions.appendChild(li)
   })
 })
-window.markActive = async function (id) {
-  const { error } = await supabase
-    .from('products')
-    .update({ status: 'active', activated_at: new Date().toISOString() })
-    .eq('id', id)
 
-  if (error) {
-    console.error("Error marking active:", error)
+window.markActive=async function(id){
+  const {error}=await supabase
+    .from('products')
+    .update({status:'active',activated_at:new Date().toISOString()})
+    .eq('id',id)
+
+  if(error){
+    console.error("Error marking active:",error)
     alert("Failed to mark active.")
-  } else {
+  }else{
     loadInventory()
   }
 }
 
-window.setOnHold = async function (id) {
-  const { error } = await supabase
+window.setOnHold=async function(id){
+  const {error}=await supabase
     .from('products')
-    .update({ status: 'on_hold' })
-    .eq('id', id)
+    .update({status:'on_hold'})
+    .eq('id',id)
 
-  if (error) {
-    console.error("Error setting on hold:", error)
+  if(error){
+    console.error("Error setting on hold:",error)
     alert("Failed to set on hold.")
-  } else {
+  }else{
     loadInventory()
   }
 }
+
 loadInventory()

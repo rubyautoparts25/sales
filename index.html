@@ -1,95 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Inventory</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 2rem;
-      color: #333;
-    }
-    h1 {
-      margin-bottom: 1rem;
-    }
-    form {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
-    }
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 0.8rem;
-    }
-    .form-row input,
-    .form-row select {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 0.9rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #333;
-      color: #fff;
-      border: none;
-      padding: 0.6rem 1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover {
-      background-color: #555;
-    }
-    #searchInput {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      width: 100%;
-      font-size: 0.9rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    #inventoryTable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 0.85rem;
-    }
-    #inventoryTable th,
-    #inventoryTable td {
-      border: 1px solid #ccc;
-      padding: 0.4rem 0.6rem;
-      text-align: left;
-    }
-    #inventoryTable th {
-      background-color: #eee;
-      font-weight: 600;
-    }
-    #inventoryTable tr:hover {
-      background-color: #f9f9f9;
-    }
-    #inventoryTable button {
-      padding: 0.3rem 0.5rem;
-      font-size: 0.75rem;
-      margin-right: 0.2rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .edit-btn {
-      background-color: #333;
-      color: #fff;
-    }
-    .delete-btn {
-      background-color: #999;
-      color: #fff;
-    }
-  </style>
   <script>
     function checkPassword() {
       const password=prompt("Enter passcode to access analytics:")
@@ -110,6 +23,83 @@
     }
     
   </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    h1, h2 { margin-bottom: 1rem; }
+    form {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .form-row input, .form-row select {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover { background-color: #555; }
+    #searchInput {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      width: 100%;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #inventoryTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+    #inventoryTable th, #inventoryTable td {
+      border: 1px solid #ccc;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+    }
+    #inventoryTable th {
+      background-color: #eee;
+      font-weight: 600;
+    }
+    #inventoryTable tr:hover {
+      background-color: #f9f9f9;
+    }
+    #inventoryTable button {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      margin-right: 0.2rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #333; color: #fff; }
+    .delete-btn { background-color: #999; color: #fff; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
   <h1>General Automotives</h1>
@@ -143,25 +133,17 @@
     </div>
     <button type="submit">Add</button>
   </form>
+
   <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
   <table id="inventoryTable">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Variant</th>
-        <th>Class</th>
-        <th>Brand</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Total</th>
-        <th>Shelf</th>
-        <th>Status</th>
-        <th>Date Added</th>
-        <th>Actions</th>
+        <th>Name</th><th>Variant</th><th>Class</th><th>Brand</th><th>Qty</th><th>Price</th><th>Total</th><th>Shelf</th><th>Status</th><th>Date Added</th><th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+
   <h2>Generated Barcode</h2>
   <svg id="barcode"></svg><br>
   <button id="downloadBarcode">Download Barcode</button>
@@ -169,6 +151,7 @@
   <br><br>
   <button onclick="checkPassword()">Go to Billing</button>
   <button onclick="checkMetrics()">View Metrics</button>
+
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
