@@ -1,165 +1,176 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase=createClient(
+const supabase = createClient(
   'https://vhltvlfgauerqltntzvs.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
 )
 
-let cart=[]
-let customer={}
-let scanLock=false
+let cart = []
+let customer = {}
+let scanLock = false
 
-document.getElementById('customerForm').addEventListener('submit',e=>{
+// --- Customer Form ---
+document.getElementById('customerForm').addEventListener('submit', e => {
   e.preventDefault()
-  customer={
-    name:document.getElementById('customerName').value,
-    phone:document.getElementById('customerPhone').value
+  customer = {
+    name: document.getElementById('customerName').value.trim(),
+    phone: document.getElementById('customerPhone').value.trim()
   }
-  document.getElementById('customerDisplay').textContent=
-    `Customer: ${customer.name} (${customer.phone||''})`
+  document.getElementById('customerDisplay').textContent =
+    `Customer: ${customer.name} (${customer.phone || ''})`
 })
 
-document.getElementById('barcodeInput').addEventListener('input',e=>{
-  const code=e.target.value.trim()
-  if(code.length<6 || scanLock) return
-
-  scanLock=true
-  setTimeout(()=>{scanLock=false},300)
-
+// --- Barcode Input ---
+document.getElementById('barcodeInput').addEventListener('input', e => {
+  const code = e.target.value.trim()
+  if (code.length < 6 || scanLock) return
+  scanLock = true
+  setTimeout(() => { scanLock = false }, 300)
   addScannedItem(code)
-  e.target.value=""
+  e.target.value = ''
 })
 
-async function addScannedItem(code){
-  const {data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
-  if(error||!data){
-    alert("Product not found")
-    return
+// --- Add scanned item ---
+async function addScannedItem(code) {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('barcode', code)
+      .single()
+
+    if (error || !data) {
+      alert("Product not found")
+      return
+    }
+
+    const discountInput = parseFloat(document.getElementById('discountInput').value) || 0
+    const finalPrice = data.price - (data.price * discountInput / 100)
+
+    const existingIndex = cart.findIndex(item => item.id === data.id)
+    if (existingIndex !== -1) {
+      cart[existingIndex].qty += 1
+    } else {
+      cart.push({
+        id: data.id,
+        name: data.name,
+        price: data.price,
+        discount: discountInput,
+        finalPrice,
+        qty: 1
+      })
+    }
+
+    renderCart()
+  } catch (err) {
+    console.error("Barcode fetch error:", err)
+    alert("Error fetching product.")
   }
-
-  const discount=parseFloat(document.getElementById('discountInput').value)||0
-  const finalPrice=data.price-(data.price*discount/100)
-
-  const existingIndex=cart.findIndex(item=>item.id===data.id)
-
-  if(existingIndex!==-1){
-    cart[existingIndex].qty+=1
-  }
-  else{
-    cart.push({
-      id:data.id,
-      name:data.name,
-      price:data.price,
-      discount,
-      finalPrice,
-      qty:1
-    })
-  }
-
-  renderCart()
 }
 
-function renderCart(){
-  const tbody=document.querySelector('#cart-table tbody')
-  tbody.innerHTML=''
-  let total=0
+// --- Render Cart ---
+function renderCart() {
+  const tbody = document.querySelector('#cart-table tbody')
+  tbody.innerHTML = ''
+  let total = 0
 
-  cart.forEach((item,idx)=>{
-    const lineTotal=item.finalPrice*item.qty
-    total+=lineTotal
-    const row=document.createElement('tr')
-    row.innerHTML=`
+  cart.forEach((item, idx) => {
+    const lineTotal = item.finalPrice * item.qty
+    total += lineTotal
+
+    const row = document.createElement('tr')
+    row.innerHTML = `
       <td>${item.name}</td>
-      <td>${item.price}</td>
-      <td><input type="number" value="${item.discount}" min="0" max="100" onchange="updateDiscount(${idx},this.value)"></td>
-
+      <td>${item.price.toFixed(2)}</td>
+      <td><input type="number" value="${item.discount}" min="0" max="100" onchange="updateDiscount(${idx}, this.value)"></td>
       <td>${item.finalPrice.toFixed(2)}</td>
-      <td><input type="number" value="${item.qty}" min="1" onchange="updateQty(${idx},this.value)"></td>
+      <td><input type="number" value="${item.qty}" min="1" onchange="updateQty(${idx}, this.value)"></td>
       <td>${lineTotal.toFixed(2)}</td>
       <td><button onclick="removeItem(${idx})">X</button></td>
     `
     tbody.appendChild(row)
   })
 
-  document.getElementById('grandTotal').textContent=total.toFixed(2)
+  document.getElementById('grandTotal').textContent = total.toFixed(2)
 }
 
-window.updateQty=(idx,val)=>{
-  cart[idx].qty=parseInt(val)
+// --- Cart item updates ---
+window.updateQty = (idx, val) => {
+  cart[idx].qty = parseInt(val)
   renderCart()
 }
-window.updateDiscount=(idx,val)=>{
-  const discount=parseFloat(val)||0
-  const item=cart[idx]
-  item.discount=discount
-  item.finalPrice=item.price-(item.price*discount/100)
+window.updateDiscount = (idx, val) => {
+  const discount = parseFloat(val) || 0
+  const item = cart[idx]
+  item.discount = discount
+  item.finalPrice = item.price - (item.price * discount / 100)
+  renderCart()
+}
+window.removeItem = idx => {
+  cart.splice(idx, 1)
   renderCart()
 }
 
-window.removeItem=idx=>{
-  cart.splice(idx,1)
-  renderCart()
-}
-
-document.getElementById('finalizeBill').addEventListener('click',async()=>{
-  if(!customer.name){
+// --- Finalize Bill ---
+document.getElementById('finalizeBill').addEventListener('click', async () => {
+  if (!customer.name) {
     alert("Set customer first")
     return
   }
-  if(cart.length===0){
+  if (cart.length === 0) {
     alert("Cart is empty")
     return
   }
 
-  const total=cart.reduce((sum,i)=>sum+(i.finalPrice*i.qty),0)
+  const total = cart.reduce((sum, i) => sum + (i.finalPrice * i.qty), 0)
 
-  const {data:bill,error:billErr}=await supabase.from('bills').insert([{
-    customer_name: customer.name,
-    customer_phone: customer.phone,
-    total_amount: total
-  }]).select().single()
+  try {
+    const { data: bill, error: billErr } = await supabase.from('bills').insert([{
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      total_amount: total
+    }]).select().single()
 
-  if(billErr){
-    console.error("Bill error:",billErr)
+    if (billErr) throw billErr
+
+    for (const item of cart) {
+      const { error: saleError } = await supabase.from("sales").insert({
+        product_id: item.id,
+        quantity_sold: item.qty,
+        bill_id: bill.id,
+        price_at_sale: item.price
+      })
+      if (saleError) console.error("Sale insert error:", saleError)
+    }
+
+    window.latestBill = { ...bill, items: [...cart], customer: { ...customer } }
+    alert("Bill finalized. ID: " + bill.id)
+    cart = []
+    renderCart()
+    document.getElementById('grandTotal').textContent = "0"
+  } catch (err) {
+    console.error("Finalize bill error:", err)
     alert("Failed to create bill.")
-    return
   }
-
-  for(const item of cart){
-    const {error:saleError}=await supabase.from("sales").insert({
-      product_id: item.id,
-      quantity_sold: item.qty,
-      bill_id: bill.id,
-      price_at_sale: item.price
-    })
-    if(saleError) console.error("Sale insert error:",saleError)
-  }
-
-  window.latestBill={...bill,items:[...cart],customer:{...customer}}
-  alert("Bill finalized. ID: "+bill.id)
-  cart=[]
-  renderCart()
-  document.getElementById('grandTotal').textContent="0"
 })
 
-document.getElementById('printBill').addEventListener('click',()=>{
-  if(!window.latestBill){
+// --- Print Bill ---
+document.getElementById('printBill').addEventListener('click', () => {
+  if (!window.latestBill) {
     alert("No bill to print")
     return
   }
 
-  const bill=window.latestBill
-  const now=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})
- 
+  const bill = window.latestBill
+  const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
 
-  let html=`
+  let html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#000;padding:1rem;">
       <h2 style="text-align:center;margin-bottom:0.5rem;">General Automotives</h2>
       <p style="text-align:center;margin-top:0;">Purchase Bill</p>
       <hr>
       <p><strong>Date & Time:</strong> ${now}</p>
-      <p><strong>Customer:</strong> ${bill.customer.name} (${bill.customer.phone||"-"})</p>
-
+      <p><strong>Customer:</strong> ${bill.customer.name} (${bill.customer.phone || "-"})</p>
       <p><strong>Bill ID:</strong> ${bill.id}</p>
       <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
         <thead>
@@ -173,18 +184,18 @@ document.getElementById('printBill').addEventListener('click',()=>{
         <tbody>
   `
 
-  bill.items.forEach(it=>{
-    html+=`
+  bill.items.forEach(it => {
+    html += `
       <tr>
         <td style="border:1px solid #ccc;padding:0.5rem;">${it.name}</td>
         <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">${it.qty}</td>
         <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">₹${it.finalPrice.toFixed(2)}</td>
-        <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">₹${(it.finalPrice*it.qty).toFixed(2)}</td>
+        <td style="border:1px solid #ccc;padding:0.5rem;text-align:right;">₹${(it.finalPrice * it.qty).toFixed(2)}</td>
       </tr>
     `
   })
 
-  html+=`
+  html += `
         </tbody>
       </table>
       <h3 style="text-align:right;margin-top:1rem;">Grand Total: ₹${bill.total_amount}</h3>
@@ -193,7 +204,7 @@ document.getElementById('printBill').addEventListener('click',()=>{
     </div>
   `
 
-  const w=window.open("","PrintBill","width=600,height=600")
+  const w = window.open("", "PrintBill", "width=600,height=600")
   w.document.write(html)
   w.print()
   w.close()

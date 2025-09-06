@@ -8,8 +8,7 @@
       const password=prompt("Enter passcode to access analytics:")
       if(password==="caliberparts2025") {
         window.location.href="billing.html"
-      }
-      else {
+      } else {
         alert("Incorrect password. Access denied.")
       }
     }
@@ -17,11 +16,10 @@
       const password=prompt("Enter passcode to access metrics:")
       if(password==="caliberparts2025"){
         window.location.href="metrics.html"
-      }else{
+      } else {
         alert("Incorrect password. Access denied.")
       }
     }
-    
   </script>
   <style>
     body {
@@ -104,6 +102,7 @@
 <body>
   <h1>General Automotives</h1>
   <h2>Inventory Manager</h2>
+
   <form id="productForm">
     <div class="form-row">
       <input type="text" id="name" placeholder="Part Name" required>
@@ -135,10 +134,22 @@
   </form>
 
   <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
+
   <table id="inventoryTable">
     <thead>
       <tr>
-        <th>Name</th><th>Variant</th><th>Class</th><th>Brand</th><th>Qty</th><th>Price</th><th>Total</th><th>Shelf</th><th>Status</th><th>Date Added</th><th>Actions</th>
+        <th>Name</th>
+        <th>Variant</th>
+        <th>Class</th>
+        <th>Brand</th>
+        <th>Total Qty</th>
+        <th>On-Hold Qty</th>
+        <th>Active Qty</th>
+        <th>Price</th>
+        <th>Total Value</th>
+        <th>Shelf</th>
+        <th>Date Added</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>

@@ -8,8 +8,9 @@ const supabase=createClient(
 )
 
 let currentBarcode=null
-function generateBarcode() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase()
+
+function generateBarcode(){
+  return Math.random().toString(36).substring(2,10).toUpperCase()
 }
 
 window.filterInventory=function(){
@@ -21,7 +22,7 @@ window.filterInventory=function(){
   })
 }
 
-document.getElementById('productForm').addEventListener('submit',async e=>{
+document.getElementById('productForm').addEventListener('submit', async e=>{
   e.preventDefault()
   const form=e.target
   const name=form.name.value.trim()
@@ -58,17 +59,21 @@ document.getElementById('productForm').addEventListener('submit',async e=>{
         const {error:updateError}=await supabase
           .from('products')
           .update({
-            quantity:existingProduct.quantity+quantity,
-            shelf_code:shelf,
-            expiry_date:expiryDate
+            quantity: existingProduct.quantity + quantity,
+            qty_on_hold: (existingProduct.qty_on_hold||0) + quantity,
+            shelf_code: shelf,
+            expiry_date: expiryDate
           })
-          .eq('id',existingProduct.id)
+          .eq('id', existingProduct.id)
         if(updateError) throw updateError
       }else{
         barcode=generateBarcode()
         const {error:insertError}=await supabase.from('products').insert([{
           name,variant,class_of_product:classOfProduct,brand,
-          quantity,price,expiry_date:expiryDate,shelf_code:shelf,
+          quantity,
+          qty_on_hold:quantity,
+          qty_active:0,
+          price,expiry_date:expiryDate,shelf_code:shelf,
           barcode,status:'on_hold'
         }])
         if(insertError) throw insertError
@@ -77,7 +82,10 @@ document.getElementById('productForm').addEventListener('submit',async e=>{
       barcode=generateBarcode()
       const {error:insertError}=await supabase.from('products').insert([{
         name,variant,class_of_product:classOfProduct,brand,
-        quantity,price,expiry_date:expiryDate,shelf_code:shelf,
+        quantity,
+        qty_on_hold:quantity,
+        qty_active:0,
+        price,expiry_date:expiryDate,shelf_code:shelf,
         barcode,status:'on_hold'
       }])
       if(insertError) throw insertError
@@ -119,20 +127,16 @@ async function loadInventory(){
       <td>${product.class_of_product||'-'}</td>
       <td>${product.brand}</td>
       <td>${product.quantity}</td>
+      <td>${product.qty_on_hold||0}</td>
+      <td>${product.qty_active||0}</td>
       <td>${product.price}</td>
       <td>${totalPrice}</td>
       <td>${product.shelf_code||'-'}</td>
-      <td>${product.status}</td>
       <td>${formattedDate}</td>
       <td>
         <button onclick="editProduct('${product.id}')">Edit</button>
         <button onclick="deleteProduct('${product.id}')">Delete</button>
         <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
-        ${
-          product.status==="on_hold"
-          ?`<button onclick="markActive('${product.id}')">Mark Active</button>`
-          :`<button onclick="setOnHold('${product.id}')">Set On Hold</button>`
-        }
       </td>
     `
     tbody.appendChild(row)
@@ -241,33 +245,5 @@ nameInput.addEventListener('input',async()=>{
     suggestions.appendChild(li)
   })
 })
-
-window.markActive=async function(id){
-  const {error}=await supabase
-    .from('products')
-    .update({status:'active',activated_at:new Date().toISOString()})
-    .eq('id',id)
-
-  if(error){
-    console.error("Error marking active:",error)
-    alert("Failed to mark active.")
-  }else{
-    loadInventory()
-  }
-}
-
-window.setOnHold=async function(id){
-  const {error}=await supabase
-    .from('products')
-    .update({status:'on_hold'})
-    .eq('id',id)
-
-  if(error){
-    console.error("Error setting on hold:",error)
-    alert("Failed to set on hold.")
-  }else{
-    loadInventory()
-  }
-}
 
 loadInventory()
