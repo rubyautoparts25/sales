@@ -8,8 +8,6 @@ const supabase=createClient(
 )
 
 let currentBarcode=null
-
-// --- Barcode generator (alphanumeric 8 chars) ---
 function generateBarcode() {
   return Math.random().toString(36).substring(2, 10).toUpperCase()
 }
