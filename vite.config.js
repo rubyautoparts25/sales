@@ -6,7 +6,8 @@ export default defineConfig({
       input: {
         main: 'index.html',
         billing: 'billing.html',
-        edit: 'edit.html'
+        edit: 'edit.html',
+        metrics: './metrics.html'
       }
     }
   }
