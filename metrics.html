@@ -50,19 +50,21 @@
 <body>
   <h1>General Automotives</h1>
   <h2>Metrics Dashboard</h2>
+
   <div class="section" id="inventory-analytics">
     <h2>Inventory Analytics</h2>
     <div id="lowStock"></div>
     <div id="fastSlow"></div>
     <div id="stockAging"></div>
   </div>
+
   <div class="section" id="billing-analytics">
     <h2>Billing & Sales Analytics</h2>
     <div class="trend-buttons">
-      <button onclick="loadTrends('daily')">Daily</button>
-      <button onclick="loadTrends('weekly')">Weekly</button>
-      <button onclick="loadTrends('monthly')">Monthly</button>
-      <button onclick="loadTrends('yearly')">Yearly</button>
+      <button data-range="daily">Daily</button>
+      <button data-range="weekly">Weekly</button>
+      <button data-range="monthly">Monthly</button>
+      <button data-range="yearly">Yearly</button>
     </div>
     <canvas id="salesChart"></canvas>
     <canvas id="topSellingChart"></canvas>
@@ -72,6 +74,7 @@
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
     const supabase=createClient(
       'https://vhltvlfgauerqltntzvs.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
@@ -200,6 +203,15 @@
       `
     }
 
+    // attach button listeners
+    document.querySelectorAll('.trend-buttons button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const range=btn.getAttribute('data-range')
+        loadTrends(range)
+      })
+    })
+
+    // initial load
     loadInventoryAnalytics()
     loadTrends('daily')
     loadTopSelling()
