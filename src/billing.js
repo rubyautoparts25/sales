@@ -9,7 +9,6 @@ let cart = []
 let customer = {}
 let scanLock = false
 
-// --- Customer Form ---
 document.getElementById('customerForm').addEventListener('submit', e => {
   e.preventDefault()
   customer = {
@@ -20,7 +19,6 @@ document.getElementById('customerForm').addEventListener('submit', e => {
     `Customer: ${customer.name} (${customer.phone || ''})`
 })
 
-// --- Barcode Input ---
 document.getElementById('barcodeInput').addEventListener('input', e => {
   const code = e.target.value.trim()
   if (code.length < 6 || scanLock) return
@@ -30,7 +28,6 @@ document.getElementById('barcodeInput').addEventListener('input', e => {
   e.target.value = ''
 })
 
-// --- Add scanned item ---
 async function addScannedItem(code) {
   try {
     const { data, error } = await supabase
@@ -38,15 +35,9 @@ async function addScannedItem(code) {
       .select('*')
       .eq('barcode', code)
       .single()
-
-    if (error || !data) {
-      alert("Product not found")
-      return
-    }
-
+    if (error || !data) { alert("Product not found"); return }
     const discountInput = parseFloat(document.getElementById('discountInput').value) || 0
     const finalPrice = data.price - (data.price * discountInput / 100)
-
     const existingIndex = cart.findIndex(item => item.id === data.id)
     if (existingIndex !== -1) {
       cart[existingIndex].qty += 1
@@ -60,7 +51,6 @@ async function addScannedItem(code) {
         qty: 1
       })
     }
-
     renderCart()
   } catch (err) {
     console.error("Barcode fetch error:", err)
@@ -68,16 +58,13 @@ async function addScannedItem(code) {
   }
 }
 
-// --- Render Cart ---
 function renderCart() {
   const tbody = document.querySelector('#cart-table tbody')
   tbody.innerHTML = ''
   let total = 0
-
   cart.forEach((item, idx) => {
     const lineTotal = item.finalPrice * item.qty
     total += lineTotal
-
     const row = document.createElement('tr')
     row.innerHTML = `
       <td>${item.name}</td>
@@ -90,15 +77,14 @@ function renderCart() {
     `
     tbody.appendChild(row)
   })
-
   document.getElementById('grandTotal').textContent = total.toFixed(2)
 }
 
-// --- Cart item updates ---
 window.updateQty = (idx, val) => {
   cart[idx].qty = parseInt(val)
   renderCart()
 }
+
 window.updateDiscount = (idx, val) => {
   const discount = parseFloat(val) || 0
   const item = cart[idx]
@@ -106,33 +92,23 @@ window.updateDiscount = (idx, val) => {
   item.finalPrice = item.price - (item.price * discount / 100)
   renderCart()
 }
+
 window.removeItem = idx => {
   cart.splice(idx, 1)
   renderCart()
 }
 
-// --- Finalize Bill ---
 document.getElementById('finalizeBill').addEventListener('click', async () => {
-  if (!customer.name) {
-    alert("Set customer first")
-    return
-  }
-  if (cart.length === 0) {
-    alert("Cart is empty")
-    return
-  }
-
+  if (!customer.name) { alert("Set customer first"); return }
+  if (cart.length === 0) { alert("Cart is empty"); return }
   const total = cart.reduce((sum, i) => sum + (i.finalPrice * i.qty), 0)
-
   try {
     const { data: bill, error: billErr } = await supabase.from('bills').insert([{
       customer_name: customer.name,
       customer_phone: customer.phone,
       total_amount: total
     }]).select().single()
-
     if (billErr) throw billErr
-
     for (const item of cart) {
       const { error: saleError } = await supabase.from("sales").insert({
         product_id: item.id,
@@ -141,8 +117,21 @@ document.getElementById('finalizeBill').addEventListener('click', async () => {
         price_at_sale: item.price
       })
       if (saleError) console.error("Sale insert error:", saleError)
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', item.id)
+        .single()
+      if (!fetchError) {
+        const newQty = (product.quantity || 0) - item.qty
+        const newOnHold = (product.qty_on_hold || 0) - item.qty
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ quantity: newQty, qty_on_hold: newOnHold })
+          .eq('id', item.id)
+        if (updateError) console.error("Stock update error:", updateError)
+      }
     }
-
     window.latestBill = { ...bill, items: [...cart], customer: { ...customer } }
     alert("Bill finalized. ID: " + bill.id)
     cart = []
@@ -154,19 +143,13 @@ document.getElementById('finalizeBill').addEventListener('click', async () => {
   }
 })
 
-// --- Print Bill ---
 document.getElementById('printBill').addEventListener('click', () => {
-  if (!window.latestBill) {
-    alert("No bill to print")
-    return
-  }
-
+  if (!window.latestBill) { alert("No bill to print"); return }
   const bill = window.latestBill
   const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-
   let html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#000;padding:1rem;">
-      <h2 style="text-align:center;margin-bottom:0.5rem;">General Automotives</h2>
+      <h2 style="text-align:center;margin-bottom:0.5rem;">Ruby Automotives</h2>
       <p style="text-align:center;margin-top:0;">Purchase Bill</p>
       <hr>
       <p><strong>Date & Time:</strong> ${now}</p>
@@ -183,7 +166,6 @@ document.getElementById('printBill').addEventListener('click', () => {
         </thead>
         <tbody>
   `
-
   bill.items.forEach(it => {
     html += `
       <tr>
@@ -194,7 +176,6 @@ document.getElementById('printBill').addEventListener('click', () => {
       </tr>
     `
   })
-
   html += `
         </tbody>
       </table>
@@ -203,7 +184,6 @@ document.getElementById('printBill').addEventListener('click', () => {
       <p style="text-align:center;">Thank you for your purchase</p>
     </div>
   `
-
   const w = window.open("", "PrintBill", "width=600,height=600")
   w.document.write(html)
   w.print()
