@@ -1,222 +1,288 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Metrics Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 2rem;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .section {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.05);
-      margin-bottom: 2rem;
-    }
-    .section h2 {
-      margin-bottom: 1rem;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.5rem;
-    }
-    canvas {
-      max-width: 100%;
-      margin-top: 1rem;
-    }
-    .trend-buttons button {
-      margin-right: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.85rem;
-      background-color: #333;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .trend-buttons button:hover {
-      background-color: #555;
-    }
+<meta charset="UTF-8">
+<title>Administrator Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fff;
+    margin: 0;
+    padding: 2rem;
+    color: #000;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .section {
+    background: #fff;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid #999;
+    border-radius: 4px;
+  }
+  .section h2 {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #999;
+    padding-bottom: 0.5rem;
+  }
+  canvas {
+    max-width: 100%;
+    margin-top: 1rem;
+  }
+  #inventoryTable, #billsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+  #inventoryTable th, #inventoryTable td,
+  #billsTable th, #billsTable td {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    text-align: left;
+  }
+  #inventoryTable input {
+    width: 60px;
+    padding: 2px;
+    border: 1px solid #999;
+    background: #fff;
+    color: #000;
+  }
+  button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    background: #000;
+    color: #fff;
+    border: 1px solid #000;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #555;
+    border-color: #555;
+  }
+  .kpi-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .kpi {
+    flex: 1;
+    background: #fff;
+    padding: 1rem;
+    border: 1px solid #999;
+    text-align: center;
+  }
   </style>
 </head>
 <body>
-  <h1>General Automotives</h1>
-  <h2>Metrics Dashboard</h2>
+<h1>Administrator Panel</h1>
 
-  <div class="section" id="inventory-analytics">
-    <h2>Inventory Analytics</h2>
-    <div id="lowStock"></div>
-    <div id="fastSlow"></div>
-    <div id="stockAging"></div>
-  </div>
+<div class="kpi-cards">
+<div class="kpi"><h3>Total Products</h3><p id="totalProducts">0</p></div>
+<div class="kpi"><h3>Active Stock</h3><p id="activeStock">0</p></div>
+<div class="kpi"><h3>On-Hold Stock</h3><p id="holdStock">0</p></div>
+<div class="kpi"><h3>Total Revenue</h3><p id="totalRevenue">₹0</p></div>
+<div class="kpi"><h3>Total Bills</h3><p id="totalBills">0</p></div>
+</div>
 
-  <div class="section" id="billing-analytics">
-    <h2>Billing & Sales Analytics</h2>
-    <div class="trend-buttons">
-      <button data-range="daily">Daily</button>
-      <button data-range="weekly">Weekly</button>
-      <button data-range="monthly">Monthly</button>
-      <button data-range="yearly">Yearly</button>
-    </div>
-    <canvas id="salesChart"></canvas>
-    <canvas id="topSellingChart"></canvas>
-    <div id="discountImpact"></div>
-    <div id="customerFrequency"></div>
-  </div>
+<div class="section">
+<h2>Inventory</h2>
+<table id="inventoryTable">
+<thead>
+<tr>
+<th>Name</th>
+<th>Variant</th>
+<th>Class</th>
+<th>Brand</th>
+<th>Total Qty</th>
+<th>On-Hold</th>
+<th>Active</th>
+<th>Price</th>
+<th>Shelf</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+<div class="section">
+<h2>Sales Trends</h2>
+<div class="trend-buttons">
+<button data-period="daily">Daily</button>
+<button data-period="weekly">Weekly</button>
+<button data-period="monthly">Monthly</button>
+<button data-period="yearly">Yearly</button>
+</div>
+<canvas id="salesChart"></canvas>
+<canvas id="topProductsChart"></canvas>
+<div id="discountInfo"></div>
+<div id="customerStats"></div>
+</div>
 
-    const supabase=createClient(
-      'https://vhltvlfgauerqltntzvs.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
-    )
+<div class="section">
+<h2>Recent Bills</h2>
+<table id="billsTable">
+<thead>
+<tr>
+<th>Bill ID</th>
+<th>Customer</th>
+<th>Total</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
 
-    let salesChart, topSellingChart
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    async function loadInventoryAnalytics(){
-      const { data } = await supabase.from('products').select('*')
+const db = createClient(
+  'https://vhltvlfgauerqltntzvs.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
+)
 
-      const lowStock = data.filter(p => p.quantity < 5)
-      const fastSlow = [...data].sort((a,b)=>b.quantity-a.quantity)
-      const stockAging = data.map(p => ({
-        ...p,
-        age: Math.floor((Date.now()-new Date(p.date_added))/86400000)
-      }))
+let salesChartInstance, topChartInstance
 
-      document.getElementById('lowStock').innerHTML = `
-        <h3>Low Stock Items</h3>
-        <ul>${lowStock.map(p=>`<li>${p.name} (${p.variant}) – Qty: ${p.quantity}</li>`).join('')}</ul>
-      `
-      document.getElementById('fastSlow').innerHTML = `
-        <h3>Fast/Slow Movers</h3>
-        <ul>${fastSlow.map(p=>`<li>${p.name} (${p.variant}) – Qty: ${p.quantity}</li>`).join('')}</ul>
-      `
-      document.getElementById('stockAging').innerHTML = `
-        <h3>Stock Aging</h3>
-        <ul>${stockAging.map(p=>`<li>${p.name} – ${p.age} days</li>`).join('')}</ul>
-      `
-    }
+async function loadKPIs() {
+  const { data: products } = await db.from('products').select('*')
+  const { data: bills } = await db.from('bills').select('*')
+  document.getElementById('totalProducts').textContent = products.length
+  document.getElementById('activeStock').textContent = products.reduce((sum,p)=>sum+(p.qty_active||0),0)
+  document.getElementById('holdStock').textContent = products.reduce((sum,p)=>sum+(p.qty_on_hold||0),0)
+  document.getElementById('totalRevenue').textContent = '₹'+bills.reduce((sum,b)=>sum+(b.total_amount||0),0).toFixed(2)
+  document.getElementById('totalBills').textContent = bills.length
+}
 
-    async function loadTrends(range){
-      const now=new Date()
-      let from
-      if(range==='daily') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1)
-      if(range==='weekly') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-7)
-      if(range==='monthly') from=new Date(now.getFullYear(),now.getMonth()-1,now.getDate())
-      if(range==='yearly') from=new Date(now.getFullYear()-1,now.getMonth(),now.getDate())
+async function loadInventory() {
+  const { data: products } = await db.from('products').select('*')
+  const tbody = document.querySelector('#inventoryTable tbody')
+  tbody.innerHTML = ''
+  products.forEach(p=>{
+    const row = document.createElement('tr')
+    row.innerHTML = `
+      <td>${p.name}</td>
+      <td>${p.variant}</td>
+      <td>${p.class_of_product||'-'}</td>
+      <td>${p.brand}</td>
+      <td><input type="number" value="${p.quantity}" min="0" onchange="updateProduct('${p.id}',this.value,'quantity')"></td>
+      <td><input type="number" value="${p.qty_on_hold||0}" min="0" onchange="updateProduct('${p.id}',this.value,'qty_on_hold')"></td>
+      <td>${p.qty_active||0}</td>
+      <td><input type="number" value="${p.price}" min="0" step="0.01" onchange="updateProduct('${p.id}',this.value,'price')"></td>
+      <td><input type="text" value="${p.shelf_code||''}" onchange="updateProduct('${p.id}',this.value,'shelf_code')"></td>
+      <td><button onclick="deleteProduct('${p.id}')">Delete</button></td>
+    `
+    tbody.appendChild(row)
+  })
+}
 
-      const { data } = await supabase
-        .from('bills')
-        .select('*')
-        .gte('created_at', from.toISOString())
+window.updateProduct = async (id,value,column)=>{
+  let updateObj={}
+  updateObj[column] = ['quantity','qty_on_hold','price'].includes(column)?parseFloat(value):value
+  if(column==='quantity'||column==='qty_on_hold'){
+    const { data: old } = await db.from('products').select('quantity,qty_on_hold').eq('id',id).single()
+    updateObj.qty_active = Math.max((updateObj.quantity||old.quantity)-(updateObj.qty_on_hold||old.qty_on_hold),0)
+  }
+  await db.from('products').update(updateObj).eq('id',id)
+  loadInventory()
+  loadKPIs()
+}
 
-      const grouped = {}
-      data.forEach(b => {
-        const date = new Date(b.created_at).toLocaleDateString('en-IN')
-        grouped[date] = (grouped[date] || 0) + b.total_amount
-      })
+window.deleteProduct = async (id)=>{
+  if(!confirm("Delete product?")) return
+  await db.from('products').delete().eq('id',id)
+  loadInventory()
+  loadKPIs()
+}
 
-      const labels = Object.keys(grouped)
-      const values = Object.values(grouped)
+async function loadSales(period){
+  const now = new Date()
+  let from
+  if(period==='daily') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1)
+  if(period==='weekly') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-7)
+  if(period==='monthly') from=new Date(now.getFullYear(),now.getMonth()-1,now.getDate())
+  if(period==='yearly') from=new Date(now.getFullYear()-1,now.getMonth(),now.getDate())
+  const { data: bills } = await db.from('bills').select('*').gte('created_at',from.toISOString())
+  const dailyTotals = {}
+  bills.forEach(b=>{
+    const d = new Date(b.created_at).toLocaleDateString('en-IN')
+    dailyTotals[d] = (dailyTotals[d]||0) + b.total_amount
+  })
+  const labels = Object.keys(dailyTotals)
+  const values = Object.values(dailyTotals)
+  if(salesChartInstance) salesChartInstance.destroy()
+  salesChartInstance = new Chart(document.getElementById('salesChart'),{
+    type:'line',
+    data:{ labels, datasets:[{ label:`${period.charAt(0).toUpperCase()+period.slice(1)} Sales`, data: values, borderColor:'#333', backgroundColor:'rgba(0,0,0,0.1)', fill:true }] }
+  })
+}
 
-      if(salesChart) salesChart.destroy()
-      salesChart = new Chart(document.getElementById('salesChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: `${range.charAt(0).toUpperCase()+range.slice(1)} Sales`,
-            data: values,
-            borderColor: '#333',
-            backgroundColor: 'rgba(0,0,0,0.1)',
-            fill: true
-          }]
-        }
-      })
-    }
+async function loadTopSelling() {
+  const { data: sales } = await db.from('sales').select('product_id,quantity_sold')
+  const tally = {}
+  sales.forEach(s=>{ tally[s.product_id] = (tally[s.product_id]||0) + s.quantity_sold })
+  const ids = Object.keys(tally)
+  const { data: products } = await db.from('products').select('id,name,variant')
+  const labels = []
+  const values = []
+  ids.forEach(id=>{
+    const p = products.find(x=>x.id===id)
+    labels.push(`${p?.name||'Unknown'} (${p?.variant||''})`)
+    values.push(tally[id])
+  })
+  if(topChartInstance) topChartInstance.destroy()
+  topChartInstance = new Chart(document.getElementById('topProductsChart'),{
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Top Selling Items', data: values, backgroundColor:'#333' }] }
+  })
+}
 
-    async function loadTopSelling(){
-      const { data: sales } = await supabase.from('sales').select('product_id, quantity_sold')
-      const tally = {}
-      sales.forEach(s => {
-        tally[s.product_id] = (tally[s.product_id] || 0) + s.quantity_sold
-      })
+async function loadDiscounts() {
+  const { data: bills } = await db.from('bills').select('total_discount')
+  const totalDiscount = bills.reduce((sum,b)=>sum+(b.total_discount||0),0)
+  document.getElementById('discountInfo').innerHTML = `<h3>Discounts</h3><p>Total: ₹${totalDiscount.toFixed(2)}</p><p>Average: ₹${(totalDiscount/bills.length).toFixed(2)}</p>`
+}
 
-      const ids = Object.keys(tally)
-      const { data: products } = await supabase.from('products').select('id,name,variant')
+async function loadCustomers() {
+  const { data: bills } = await db.from('bills').select('customer_phone')
+  const countMap = {}
+  bills.forEach(b=>{
+    const phone = b.customer_phone||'Unknown'
+    countMap[phone] = (countMap[phone]||0) + 1
+  })
+  const sorted = Object.entries(countMap).sort((a,b)=>b[1]-a[1])
+  document.getElementById('customerStats').innerHTML = `<h3>Customer Visits</h3><ul>${sorted.map(([phone,count])=>`<li>${phone} – ${count} visits</li>`).join('')}</ul>`
+}
 
-      const labels = []
-      const values = []
+async function loadRecent() {
+  const { data: bills } = await db.from('bills').select('*').order('created_at',{ascending:false}).limit(10)
+  const tbody = document.querySelector('#billsTable tbody')
+  tbody.innerHTML = ''
+  bills.forEach(b=>{
+    const date = new Date(b.created_at).toLocaleString('en-IN')
+    const row = document.createElement('tr')
+    row.innerHTML = `<td>${b.id}</td><td>${b.customer_name} (${b.customer_phone||'-'})</td><td>₹${b.total_amount}</td><td>${date}</td>`
+    tbody.appendChild(row)
+  })
+}
 
-      ids.forEach(id => {
-        const p = products.find(x => x.id === id)
-        labels.push(`${p?.name||'Unknown'} (${p?.variant||''})`)
-        values.push(tally[id])
-      })
+document.querySelectorAll('.trend-buttons button').forEach(btn=>{
+  btn.addEventListener('click',()=> loadSales(btn.getAttribute('data-period')))
+})
 
-      if(topSellingChart) topSellingChart.destroy()
-      topSellingChart = new Chart(document.getElementById('topSellingChart'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Top-Selling Parts',
-            data: values,
-            backgroundColor: '#333'
-          }]
-        }
-      })
-    }
-
-    async function loadDiscountImpact(){
-      const { data: bills } = await supabase.from('bills').select('total_amount, total_discount')
-      const totalDiscount = bills.reduce((sum,b)=>sum+(b.total_discount||0),0)
-
-      document.getElementById('discountImpact').innerHTML = `
-        <h3>Discount Impact</h3>
-        <p>Total Discount Given: ₹${totalDiscount.toFixed(2)}</p>
-        <p>Average Discount per Bill: ₹${(totalDiscount/bills.length).toFixed(2)}</p>
-      `
-    }
-
-    async function loadCustomerFrequency(){
-      const { data: bills } = await supabase.from('bills').select('customer_phone')
-      const freq = {}
-      bills.forEach(b => {
-        const phone = b.customer_phone || 'Unknown'
-        freq[phone] = (freq[phone] || 0) + 1
-      })
-
-      const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1])
-      document.getElementById('customerFrequency').innerHTML = `
-        <h3>Customer Frequency</h3>
-        <ul>${sorted.map(([phone,count])=>`<li>${phone} – ${count} visits</li>`).join('')}</ul>
-      `
-    }
-
-    // attach button listeners
-    document.querySelectorAll('.trend-buttons button').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const range=btn.getAttribute('data-range')
-        loadTrends(range)
-      })
-    })
-
-    // initial load
-    loadInventoryAnalytics()
-    loadTrends('daily')
-    loadTopSelling()
-    loadDiscountImpact()
-    loadCustomerFrequency()
-  </script>
+loadKPIs()
+loadInventory()
+loadSales('daily')
+loadTopSelling()
+loadDiscounts()
+loadCustomers()
+loadRecent()
+</script>
 </body>
 </html>

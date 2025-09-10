@@ -24,18 +24,20 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f5f5f5;
+      background-color: #fff;
       margin: 0;
       padding: 2rem;
-      color: #333;
+      color: #000;
     }
-    h1, h2 { margin-bottom: 1rem; }
+    h1, h2 {
+      margin-bottom: 1rem;
+    }
     form {
       background-color: #fff;
       padding: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      border-radius: 4px;
       margin-bottom: 1.5rem;
+      border: 1px solid #999;
     }
     .form-row {
       display: flex;
@@ -46,26 +48,33 @@
       flex: 1;
       padding: 0.5rem;
       font-size: 0.9rem;
-      border: 1px solid #ccc;
+      border: 1px solid #999;
       border-radius: 4px;
+      background: #fff;
+      color: #000;
     }
     button {
-      background-color: #333;
+      background-color: #000;
       color: #fff;
-      border: none;
+      border: 1px solid #000;
       padding: 0.6rem 1rem;
       font-size: 0.9rem;
       cursor: pointer;
       border-radius: 4px;
     }
-    button:hover { background-color: #555; }
+    button:hover {
+      background-color: #555;
+      border-color: #555;
+    }
     #searchInput {
       margin-top: 1rem;
       padding: 0.5rem;
       width: 100%;
       font-size: 0.9rem;
-      border: 1px solid #ccc;
+      border: 1px solid #999;
       border-radius: 4px;
+      background: #fff;
+      color: #000;
     }
     #inventoryTable {
       width: 100%;
@@ -74,7 +83,7 @@
       font-size: 0.85rem;
     }
     #inventoryTable th, #inventoryTable td {
-      border: 1px solid #ccc;
+      border: 1px solid #999;
       padding: 0.4rem 0.6rem;
       text-align: left;
     }
@@ -83,19 +92,31 @@
       font-weight: 600;
     }
     #inventoryTable tr:hover {
-      background-color: #f9f9f9;
+      background-color: #f0f0f0;
     }
     #inventoryTable button {
       padding: 0.3rem 0.5rem;
       font-size: 0.75rem;
       margin-right: 0.2rem;
-      border: none;
+      border: 1px solid #000;
       border-radius: 4px;
       cursor: pointer;
     }
-    .edit-btn { background-color: #333; color: #fff; }
-    .delete-btn { background-color: #999; color: #fff; }
-  </style>
+    .edit-btn {
+      background-color: #000;
+      color: #fff;
+      border-color: #000;
+    }
+    .delete-btn {
+      background-color: #999;
+      color: #fff;
+      border-color: #999;
+    .low-stock {
+        background-color: #f8d7da; 
+        color: #900; 
+      }
+    }
+    </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
@@ -162,7 +183,7 @@
   <br><br>
   <button onclick="checkPassword()">Go to Billing</button>
   <button onclick="checkMetrics()">View Metrics</button>
-
+  <br><br>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
