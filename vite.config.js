@@ -7,7 +7,8 @@ export default defineConfig({
         main: 'index.html',
         billing: 'billing.html',
         edit: 'edit.html',
-        metrics: './metrics.html'
+        metrics: './metrics.html',
+        catrain: './catrain.html'
       }
     }
   }

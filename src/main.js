@@ -119,6 +119,8 @@ async function loadInventory(){
         year:'numeric',month:'short',day:'numeric'
       })
       :'-'
+    const minStock=product.min_stock||20
+    const quantityColor=product.quantity<minStock?'red':'black'
 
     const row=document.createElement('tr')
     row.innerHTML=`
@@ -126,7 +128,7 @@ async function loadInventory(){
       <td>${product.variant}</td>
       <td>${product.class_of_product||'-'}</td>
       <td>${product.brand}</td>
-      <td style="color:${product.quantity<20?'red':'black'}">${product.quantity}</td>
+      <td style="color:${quantityColor}">${product.quantity}</td>
       <td>${product.qty_on_hold||0}</td>
       <td>${product.qty_active||0}</td>
       <td>${product.price}</td>

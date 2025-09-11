@@ -55,7 +55,7 @@
       background-color: #555;
       border-color: #555;
     }
-    </style>
+  </style>
 </head>
 <body>
   <h1>Edit Product</h1>
@@ -100,6 +100,9 @@
     <label>Barcode (locked)</label>
     <input type="text" id="barcode" disabled>
 
+    <label>Minimum Stock</label>
+    <input type="number" id="min_stock" min="0">
+
     <button type="submit">Update Product</button>
   </form>
 
@@ -113,6 +116,8 @@
 
     const params = new URLSearchParams(window.location.search)
     const productId = params.get('id')
+
+    let oldMinStock = 20
 
     async function loadProduct() {
       const { data, error } = await supabase
@@ -133,6 +138,8 @@
       document.getElementById('price').value = data.price || 0
       document.getElementById('shelf').value = data.shelf_code || ''
       document.getElementById('barcode').value = data.barcode || ''
+      document.getElementById('min_stock').value = data.min_stock ?? 20
+      oldMinStock = data.min_stock ?? 20
     }
 
     function recalcOnHold() {
@@ -158,6 +165,9 @@
       const total = parseInt(document.getElementById('quantity').value) || 0
       const active = parseInt(document.getElementById('qty_active').value) || 0
       const onHold = Math.max(total - active, 0)
+      const minStock = document.getElementById('min_stock').value.trim() !== ""
+        ? parseInt(document.getElementById('min_stock').value)
+        : oldMinStock
 
       const updated = {
         name: document.getElementById('name').value.trim(),
@@ -168,7 +178,8 @@
         qty_active: active,
         qty_on_hold: onHold,
         price: parseFloat(document.getElementById('price').value),
-        shelf_code: document.getElementById('shelf').value.trim()
+        shelf_code: document.getElementById('shelf').value.trim(),
+        min_stock: parseInt(document.getElementById('min_stock').value)||20
       }
 
       const { error } = await supabase
