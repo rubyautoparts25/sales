@@ -34,8 +34,6 @@ async function activateProduct(barcode) {
     alert("Activation failed.");
   }
 }
-
-// Example usage:
 document.getElementById('scanButton').addEventListener('click', () => {
   const barcode = document.getElementById('barcodeInput').value;
   activateProduct(barcode);

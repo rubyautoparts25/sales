@@ -126,7 +126,7 @@ async function loadInventory(){
       <td>${product.variant}</td>
       <td>${product.class_of_product||'-'}</td>
       <td>${product.brand}</td>
-      <td>${product.quantity}</td>
+      <td style="color:${product.quantity<20?'red':'black'}">${product.quantity}</td>
       <td>${product.qty_on_hold||0}</td>
       <td>${product.qty_active||0}</td>
       <td>${product.price}</td>
