@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Ruby Auto Parts - Login</title>
+  <meta charset="UTF-8">
+  <title>Ruby Auto Parts - Redirecting...</title>
   <script>
     // Redirect to login page
     window.location.href = 'login.html';
@@ -10,166 +10,38 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #fff;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       margin: 0;
-      padding: 2rem;
-      color: #000;
-    }
-    h1, h2 {
-      margin-bottom: 1rem;
-    }
-    form {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 4px;
-      margin-bottom: 1.5rem;
-      border: 1px solid #999;
-    }
-    .form-row {
+      padding: 0;
+      min-height: 100vh;
       display: flex;
-      gap: 1rem;
-      margin-bottom: 0.8rem;
+      align-items: center;
+      justify-content: center;
+      color: white;
     }
-    .form-row input, .form-row select {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 0.9rem;
-      border: 1px solid #999;
-      border-radius: 4px;
-      background: #fff;
-      color: #000;
+    .loading {
+      text-align: center;
     }
-    button {
-      background-color: #000;
-      color: #fff;
-      border: 1px solid #000;
-      padding: 0.6rem 1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      border-radius: 4px;
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid white;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
     }
-    button:hover {
-      background-color: #555;
-      border-color: #555;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    #searchInput {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      width: 100%;
-      font-size: 0.9rem;
-      border: 1px solid #999;
-      border-radius: 4px;
-      background: #fff;
-      color: #000;
-    }
-    #inventoryTable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 0.85rem;
-    }
-    #inventoryTable th, #inventoryTable td {
-      border: 1px solid #999;
-      padding: 0.4rem 0.6rem;
-      text-align: left;
-    }
-    #inventoryTable th {
-      background-color: #eee;
-      font-weight: 600;
-    }
-    #inventoryTable tr:hover {
-      background-color: #f0f0f0;
-    }
-    #inventoryTable button {
-      padding: 0.3rem 0.5rem;
-      font-size: 0.75rem;
-      margin-right: 0.2rem;
-      border: 1px solid #000;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .edit-btn {
-      background-color: #000;
-      color: #fff;
-      border-color: #000;
-    }
-    .delete-btn {
-      background-color: #999;
-      color: #fff;
-      border-color: #999;
-    .low-stock {
-        background-color: #f8d7da; 
-        color: #900; 
-      }
-    }
-    </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  </style>
 </head>
 <body>
-  <h1>Ruby Automotives</h1>
-  <h2>Inventory Manager</h2>
-
-  <form id="productForm">
-    <div class="form-row">
-      <input type="text" id="name" placeholder="Part Name" required>
-      <input type="text" id="variant" placeholder="Variant" required>
-    </div>
-    <div class="form-row">
-      <select id="class_of_product" required>
-        <option value="">Class</option>
-        <option value="Service">Service</option>
-        <option value="Suspension">Suspension</option>
-        <option value="Clutch">Clutch</option>
-        <option value="Brake">Brake</option>
-        <option value="Electronic">Electronic</option>
-        <option value="Engine">Engine</option>
-        <option value="Belts and pulleys">Belts and pulleys</option>
-        <option value="Other">Other</option>
-      </select>
-      <input type="text" id="brand" placeholder="Brand" required>
-    </div>
-    <div class="form-row">
-      <input type="number" id="quantity" placeholder="Qty" required>
-      <input type="number" id="price" placeholder="Price" step="0.01" required>
-    </div>
-    <div class="form-row">
-      <input type="date" id="expiry" placeholder="Expiry">
-      <input type="text" id="shelf" placeholder="Shelf Code" required>
-    </div>
-    <button type="submit">Add</button>
-  </form>
-
-  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
-
-  <table id="inventoryTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Variant</th>
-        <th>Class</th>
-        <th>Brand</th>
-        <th>Total Qty</th>
-        <th>On-Hold Qty</th>
-        <th>Active Qty</th>
-        <th>Price</th>
-        <th>Total Value</th>
-        <th>Shelf</th>
-        <th>Date Added</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h2>Generated Barcode</h2>
-  <svg id="barcode"></svg><br>
-  <button id="downloadBarcode">Download Barcode</button>
-  <button id="printBarcode">Print Barcode</button>
-  <br><br>
-  <button onclick="checkPassword()">Go to Billing</button>
-  <button onclick="checkMetrics()">View Metrics</button>
-  <br><br>
-  <script type="module" src="src/main.js"></script>
+  <div class="loading">
+    <div class="spinner"></div>
+    <h2>🏢 Ruby Auto Parts</h2>
+    <p>Redirecting to login...</p>
+  </div>
 </body>
 </html>
