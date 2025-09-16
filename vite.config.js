@@ -5,10 +5,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
+        login: 'login.html',
+        inventory: 'inventory.html',
         billing: 'billing.html',
         edit: 'edit.html',
         metrics: './metrics.html',
-        catrain: './catrain.html'
+        catrain: './catrain.html',
+        activate: 'activate.html'
       }
     }
   }
