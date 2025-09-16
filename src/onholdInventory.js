@@ -31,6 +31,7 @@ function renderBarcode(barcode){
     displayValue: true
   })
 }
+window.renderBarcode=renderBarcode
 
 document.getElementById('downloadBarcode').addEventListener('click',()=>{
   if(!currentBarcode) return
