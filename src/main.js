@@ -74,7 +74,8 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
           qty_on_hold:quantity,
           qty_active:0,
           price,expiry_date:expiryDate,shelf_code:shelf,
-          barcode,status:'on_hold'
+          barcode,status:'on_hold',
+          date_added:new Date().toISOString().split('T')[0]
         }])
         if(insertError) throw insertError
       }
@@ -86,7 +87,8 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
         qty_on_hold:quantity,
         qty_active:0,
         price,expiry_date:expiryDate,shelf_code:shelf,
-        barcode,status:'on_hold'
+        barcode,status:'on_hold',
+        date_added:new Date().toISOString().split('T')[0]
       }])
       if(insertError) throw insertError
     }
