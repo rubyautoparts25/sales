@@ -27,6 +27,83 @@ document.getElementById('barcodeInput').addEventListener('input',e=>{
   e.target.value=''
 })
 
+document.getElementById('productSearch').addEventListener('input',e=>{
+  const query=e.target.value.trim()
+  if(query.length<2)return
+  searchProducts(query)
+})
+
+async function searchProducts(query){
+  try{
+    const{data,error}=await supabase.from('products').select('*').ilike('name',`%${query}%`).gt('qty_active',0).limit(5)
+    if(error||!data.length){return}
+    
+    // Show search results in a simple dropdown
+    showSearchResults(data)
+  }catch(err){
+    console.error("Search error:",err)
+  }
+}
+
+function showSearchResults(products){
+  // Remove existing dropdown
+  const existing=document.getElementById('searchDropdown')
+  if(existing)existing.remove()
+  
+  if(products.length===0)return
+  
+  const dropdown=document.createElement('div')
+  dropdown.id='searchDropdown'
+  dropdown.style.position='absolute'
+  dropdown.style.background='white'
+  dropdown.style.border='1px solid #ccc'
+  dropdown.style.maxHeight='200px'
+  dropdown.style.overflowY='auto'
+  dropdown.style.zIndex='1000'
+  dropdown.style.width='300px'
+  
+  products.forEach(product=>{
+    const item=document.createElement('div')
+    item.style.padding='8px'
+    item.style.cursor='pointer'
+    item.style.borderBottom='1px solid #eee'
+    item.textContent=`${product.name} - ₹${product.price} (${product.qty_active} available)`
+    item.addEventListener('click',()=>{
+      addProductToCart(product)
+      document.getElementById('productSearch').value=''
+      dropdown.remove()
+    })
+    dropdown.appendChild(item)
+  })
+  
+  const searchInput=document.getElementById('productSearch')
+  searchInput.parentNode.appendChild(dropdown)
+  
+  // Remove dropdown when clicking outside
+  setTimeout(()=>{
+    document.addEventListener('click',function removeDropdown(e){
+      if(!searchInput.contains(e.target)&&!dropdown.contains(e.target)){
+        dropdown.remove()
+        document.removeEventListener('click',removeDropdown)
+      }
+    })
+  },100)
+}
+
+function addProductToCart(product){
+  if(product.qty_active<=0){alert("No active stock available");return}
+  const discountInput=parseFloat(document.getElementById('discountInput').value)||0
+  const finalPrice=product.price-(product.price*discountInput/100)
+  const existingIndex=cart.findIndex(item=>item.id===product.id)
+  if(existingIndex!==-1){
+    if(cart[existingIndex].qty+1>product.qty_active){alert("Not enough active stock");return}
+    cart[existingIndex].qty+=1
+  }else{
+    cart.push({id:product.id,name:product.name,price:product.price,discount:discountInput,finalPrice,qty:1,active:product.qty_active})
+  }
+  renderCart()
+}
+
 async function addScannedItem(code){
   try{
     const{data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
