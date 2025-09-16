@@ -2,7 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Product</title>
+  <title>Edit Product - Ruby Auto Parts</title>
+  <script>
+    // Check authentication
+    if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+    
+    function logout() {
+      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
+      sessionStorage.removeItem('rubyAutoPartsUser');
+      window.location.href = 'login.html';
+    }
+  </script>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -58,7 +70,13 @@
   </style>
 </head>
 <body>
-  <h1>Edit Product</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee;">
+    <h1 style="margin: 0;">🏢 Ruby Auto Parts - Edit Product</h1>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span style="color: #666; font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
+      <button onclick="logout()" style="background-color: #e74c3c; color: #fff; border: 1px solid #e74c3c; padding: 0.5rem 1rem; font-size: 0.9rem; cursor: pointer; border-radius: 4px;">Logout</button>
+    </div>
+  </div>
   <form id="editForm">
     <label>Name</label>
     <input type="text" id="name">
@@ -110,8 +128,8 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabase = createClient(
-      'https://vhltvlfgauerqltntzvs.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZobHR2bGZnYXVlcnFsdG50enZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4ODA4NTEsImV4cCI6MjA3MjQ1Njg1MX0.awJxp5p-NMlPaBNw-WHU8ri_4QAEHnMl_5hwIQrTAms'
+      'https://yrilfazkyhqwdqkgzcbb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
     )
 
     const params = new URLSearchParams(window.location.search)
@@ -192,11 +210,14 @@
         alert("Failed to update product.")
       } else {
         alert("Product updated successfully.")
-        window.location.href = 'index.html'
+        window.location.href = 'inventory.html'
       }
     })
 
     loadProduct()
+    
+    // Set current user
+    document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
   </script>
 </body>
 </html>

@@ -2,10 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Ruby Auto Parts - Login</title>
+  <title>Inventory - Ruby Auto Parts</title>
   <script>
-    // Redirect to login page
-    window.location.href = 'login.html';
+    // Check authentication
+    if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+    
+    function checkPassword() {
+      const password=prompt("Enter passcode to access analytics:")
+      if(password==="caliberparts2025") {
+        window.location.href="billing.html"
+      } else {
+        alert("Incorrect password. Access denied.")
+      }
+    }
+    function checkMetrics(){
+      const password=prompt("Enter passcode to access metrics:")
+      if(password==="caliberparts2025"){
+        window.location.href="metrics.html"
+      } else {
+        alert("Incorrect password. Access denied.")
+      }
+    }
+    
+    function logout() {
+      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
+      sessionStorage.removeItem('rubyAutoPartsUser');
+      window.location.href = 'login.html';
+    }
   </script>
   <style>
     body {
@@ -15,7 +40,41 @@
       padding: 2rem;
       color: #000;
     }
-    h1, h2 {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #eee;
+    }
+    .header h1 {
+      margin: 0;
+      color: #333;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .user-info span {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .logout-btn {
+      background-color: #e74c3c;
+      color: #fff;
+      border: 1px solid #e74c3c;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .logout-btn:hover {
+      background-color: #c0392b;
+      border-color: #c0392b;
+    }
+    h2 {
       margin-bottom: 1rem;
     }
     form {
@@ -97,18 +156,33 @@
       background-color: #999;
       color: #fff;
       border-color: #999;
+    }
     .low-stock {
         background-color: #f8d7da; 
         color: #900; 
       }
+    .navigation {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
     }
-    </style>
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
-  <h1>Ruby Automotives</h1>
-  <h2>Inventory Manager</h2>
+  <div class="header">
+    <h1>🏢 Ruby Auto Parts - Inventory Manager</h1>
+    <div class="user-info">
+      <span>Welcome, <strong id="currentUser">admin</strong></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
 
   <form id="productForm">
     <div class="form-row">
@@ -137,7 +211,7 @@
       <input type="date" id="expiry" placeholder="Expiry">
       <input type="text" id="shelf" placeholder="Shelf Code" required>
     </div>
-    <button type="submit">Add</button>
+    <button type="submit">Add Product</button>
   </form>
 
   <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
@@ -166,10 +240,20 @@
   <svg id="barcode"></svg><br>
   <button id="downloadBarcode">Download Barcode</button>
   <button id="printBarcode">Print Barcode</button>
-  <br><br>
-  <button onclick="checkPassword()">Go to Billing</button>
-  <button onclick="checkMetrics()">View Metrics</button>
-  <br><br>
+  
+  <div class="navigation">
+    <h3>Quick Navigation</h3>
+    <div class="nav-buttons">
+      <button onclick="checkPassword()">Go to Billing</button>
+      <button onclick="checkMetrics()">View Metrics</button>
+      <button onclick="window.location.href='activate.html'">Activate Products</button>
+    </div>
+  </div>
+  
+  <script>
+    // Set current user
+    document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

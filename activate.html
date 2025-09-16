@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Activate Product - Ruby Auto Parts</title>
+  <script>
+    // Check authentication
+    if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+    
+    function logout() {
+      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
+      sessionStorage.removeItem('rubyAutoPartsUser');
+      window.location.href = 'login.html';
+    }
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #fff;
+      margin: 0;
+      padding: 2rem;
+      color: #000;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #eee;
+    }
+    .header h1 {
+      margin: 0;
+      color: #333;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .user-info span {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .logout-btn {
+      background-color: #e74c3c;
+      color: #fff;
+      border: 1px solid #e74c3c;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .logout-btn:hover {
+      background-color: #c0392b;
+      border-color: #c0392b;
+    }
+    .form-container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #f9f9f9;
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    button {
+      background-color: #000;
+      color: #fff;
+      border: 1px solid #000;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #555;
+      border-color: #555;
+    }
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .back-btn {
+      background-color: #6c757d;
+      color: #fff;
+      border: 1px solid #6c757d;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .back-btn:hover {
+      background-color: #5a6268;
+      border-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏢 Ruby Auto Parts - Activate Product</h1>
+    <div class="user-info">
+      <span>Welcome, <strong id="currentUser">admin</strong></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <button class="back-btn" onclick="window.location.href='inventory.html'">← Back to Inventory</button>
+
+  <div class="form-container">
+    <h2>Activate Product Stock</h2>
+    <p>Enter the barcode of the product you want to activate from on-hold to active stock.</p>
+    
+    <form id="activateForm">
+      <div class="form-group">
+        <label for="barcode">Product Barcode</label>
+        <input type="text" id="barcode" name="barcode" placeholder="Enter barcode..." required>
+      </div>
+      
+      <button type="submit">Activate Product</button>
+    </form>
+    
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    // Set current user
+    document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
+  </script>
+  <script type="module" src="src/activate.js"></script>
+</body>
+</html>

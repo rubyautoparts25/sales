@@ -2,7 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Secret</title>
+  <title>Supplier Management - Ruby Auto Parts</title>
+  <script>
+    // Check authentication
+    if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+    
+    function logout() {
+      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
+      sessionStorage.removeItem('rubyAutoPartsUser');
+      window.location.href = 'login.html';
+    }
+  </script>
   <style>
     body { font-family: -apple-system,BlinkMacSystemFont,sans-serif; margin:2rem; background:#fff; color:#000; }
     form { margin-bottom:2rem; max-width:600px; display:none; }
@@ -15,7 +27,13 @@
   </style>
 </head>
 <body>
-  <h1>Super secret :3</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee;">
+    <h1 style="margin: 0;">🏢 Ruby Auto Parts - Supplier Management</h1>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span style="color: #666; font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
+      <button onclick="logout()" style="background-color: #e74c3c; color: #fff; border: 1px solid #e74c3c; padding: 0.5rem 1rem; font-size: 0.9rem; cursor: pointer; border-radius: 4px;">Logout</button>
+    </div>
+  </div>
 
   <div id="login">
     <label>Enter Password</label>
@@ -64,6 +82,10 @@
     <tbody id="suppliers-body"></tbody>
   </table>
 
+  <script>
+    // Set current user
+    document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
+  </script>
   <script type="module" src="src/catrain.js"></script>
 </body>
 </html>
