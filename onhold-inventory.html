@@ -2,28 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Inventory - Ruby Auto Parts</title>
+  <title>On-Hold Inventory - Ruby Auto Parts</title>
   <script>
     // Check authentication
     if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
       window.location.href = 'login.html';
-    }
-    
-    function checkPassword() {
-      const password=prompt("Enter passcode to access analytics:")
-      if(password==="caliberparts2025") {
-        window.location.href="billing.html"
-      } else {
-        alert("Incorrect password. Access denied.")
-      }
-    }
-    function checkMetrics(){
-      const password=prompt("Enter passcode to access metrics:")
-      if(password==="caliberparts2025"){
-        window.location.href="metrics.html"
-      } else {
-        alert("Incorrect password. Access denied.")
-      }
     }
     
     function logout() {
@@ -73,43 +56,6 @@
     .logout-btn:hover {
       background-color: #c0392b;
       border-color: #c0392b;
-    }
-    h2 {
-      margin-bottom: 1rem;
-    }
-    form {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 4px;
-      margin-bottom: 1.5rem;
-      border: 1px solid #999;
-    }
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 0.8rem;
-    }
-    .form-row input, .form-row select {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 0.9rem;
-      border: 1px solid #999;
-      border-radius: 4px;
-      background: #fff;
-      color: #000;
-    }
-    button {
-      background-color: #000;
-      color: #fff;
-      border: 1px solid #000;
-      padding: 0.6rem 1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover {
-      background-color: #555;
-      border-color: #555;
     }
     #searchInput {
       margin-top: 1rem;
@@ -171,50 +117,33 @@
       gap: 1rem;
       flex-wrap: wrap;
     }
+    button {
+      background-color: #000;
+      color: #fff;
+      border: 1px solid #000;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #555;
+      border-color: #555;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
   <div class="header">
-    <h1>🏢 Ruby Auto Parts - Inventory Manager</h1>
+    <h1>🏢 Ruby Auto Parts - On-Hold Inventory</h1>
     <div class="user-info">
       <span>Welcome, <strong id="currentUser">admin</strong></span>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <form id="productForm">
-    <div class="form-row">
-      <input type="text" id="name" placeholder="Part Name" required>
-      <input type="text" id="variant" placeholder="Variant" required>
-    </div>
-    <div class="form-row">
-      <select id="class_of_product" required>
-        <option value="">Class</option>
-        <option value="Service">Service</option>
-        <option value="Suspension">Suspension</option>
-        <option value="Clutch">Clutch</option>
-        <option value="Brake">Brake</option>
-        <option value="Electronic">Electronic</option>
-        <option value="Engine">Engine</option>
-        <option value="Belts and pulleys">Belts and pulleys</option>
-        <option value="Other">Other</option>
-      </select>
-      <input type="text" id="brand" placeholder="Brand" required>
-    </div>
-    <div class="form-row">
-      <input type="number" id="quantity" placeholder="Qty" required>
-      <input type="number" id="price" placeholder="Price" step="0.01" required>
-    </div>
-    <div class="form-row">
-      <input type="date" id="expiry" placeholder="Expiry">
-      <input type="text" id="shelf" placeholder="Shelf Code" required>
-    </div>
-    <button type="submit">Add Product</button>
-  </form>
-
-  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
+  <input type="text" id="searchInput" placeholder="Search on-hold inventory..." oninput="filterInventory()">
 
   <table id="inventoryTable">
     <thead>
@@ -223,9 +152,7 @@
         <th>Variant</th>
         <th>Class</th>
         <th>Brand</th>
-        <th>Total Qty</th>
         <th>On-Hold Qty</th>
-        <th>Active Qty</th>
         <th>Price</th>
         <th>Total Value</th>
         <th>Shelf</th>
@@ -244,10 +171,10 @@
   <div class="navigation">
     <h3>Quick Navigation</h3>
     <div class="nav-buttons">
+      <button onclick="window.location.href='inventory.html'">All Inventory</button>
       <button onclick="window.location.href='active-inventory.html'">Active Inventory</button>
-      <button onclick="window.location.href='onhold-inventory.html'">On-Hold Inventory</button>
-      <button onclick="checkPassword()">Go to Billing</button>
-      <button onclick="checkMetrics()">View Metrics</button>
+      <button onclick="window.location.href='billing.html'">Go to Billing</button>
+      <button onclick="window.location.href='metrics.html'">View Metrics</button>
       <button onclick="window.location.href='activate.html'">Activate Products</button>
     </div>
   </div>
@@ -256,6 +183,6 @@
     // Set current user
     document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
   </script>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/onholdInventory.js"></script>
 </body>
 </html>
