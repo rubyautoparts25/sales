@@ -36,8 +36,16 @@ document.getElementById('productSearch').addEventListener('input',e=>{
 async function searchProducts(query){
   try{
     const{data,error}=await supabase.from('products').select('*').ilike('name',`%${query}%`).gt('qty_active',0).limit(5)
-    if(error||!data.length){return}
+    if(error){
+      console.error("Search error:",error)
+      return
+    }
+    if(!data||data.length===0){
+      console.log("No products found for:",query)
+      return
+    }
     
+    console.log("Found products:",data)
     // Show search results in a simple dropdown
     showSearchResults(data)
   }catch(err){
@@ -57,17 +65,28 @@ function showSearchResults(products){
   dropdown.style.position='absolute'
   dropdown.style.background='white'
   dropdown.style.border='1px solid #ccc'
+  dropdown.style.borderRadius='4px'
+  dropdown.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'
   dropdown.style.maxHeight='200px'
   dropdown.style.overflowY='auto'
   dropdown.style.zIndex='1000'
   dropdown.style.width='300px'
+  dropdown.style.top='100%'
+  dropdown.style.left='0'
   
   products.forEach(product=>{
     const item=document.createElement('div')
-    item.style.padding='8px'
+    item.style.padding='10px'
     item.style.cursor='pointer'
     item.style.borderBottom='1px solid #eee'
+    item.style.fontSize='14px'
     item.textContent=`${product.name} - ₹${product.price} (${product.qty_active} available)`
+    item.addEventListener('mouseenter',()=>{
+      item.style.backgroundColor='#f5f5f5'
+    })
+    item.addEventListener('mouseleave',()=>{
+      item.style.backgroundColor='white'
+    })
     item.addEventListener('click',()=>{
       addProductToCart(product)
       document.getElementById('productSearch').value=''
@@ -77,7 +96,9 @@ function showSearchResults(products){
   })
   
   const searchInput=document.getElementById('productSearch')
-  searchInput.parentNode.appendChild(dropdown)
+  const container=searchInput.parentNode
+  container.style.position='relative'
+  container.appendChild(dropdown)
   
   // Remove dropdown when clicking outside
   setTimeout(()=>{
