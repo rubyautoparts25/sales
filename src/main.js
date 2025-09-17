@@ -183,7 +183,7 @@ async function renderBarcode(barcode){
     return
   }
   const formattedDate=data.date_added
-    ?new Date(data.date_added).toLocaleString('en-IN',{
+    ?new Date(data.`_added).toLocaleString('en-IN',{
       timeZone:'Asia/Kolkata',
       year:'numeric',month:'short',day:'numeric'
     })
@@ -241,8 +241,9 @@ document.getElementById('printBarcode').addEventListener('click', async () => {
   const printContent = `
     <div style="text-align:center;font-family:Arial,sans-serif;font-size:12px;">
       ${document.getElementById('barcode').outerHTML}
-      <div style="margin-top:2px;font-size:20px;">${data.name}</div>
-      <div style="margin-top:2px;font-size:17px;">${dateCode}</div>
+      <div style="margin-top:2px;font-size:15px;">${data.price}</div>
+      <div style="margin-top:2px;font-size:15px;">${data.name}</div>
+      <div style="margin-top:2px;font-size:12px;">${dateCode}</div>
     </div>
   `;
 
