@@ -183,7 +183,7 @@ async function renderBarcode(barcode){
     return
   }
   const formattedDate=data.date_added
-    ?new Date(data.`_added).toLocaleString('en-IN',{
+    ?new Date(data.date_added).toLocaleString('en-IN',{
       timeZone:'Asia/Kolkata',
       year:'numeric',month:'short',day:'numeric'
     })
