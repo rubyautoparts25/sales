@@ -163,7 +163,7 @@ window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
 }
 
-function renderBarcode(barcode){
+async function renderBarcode(barcode){
   if(!barcode) return
   JsBarcode("#barcode",barcode,{
     format:"CODE128",
@@ -175,6 +175,35 @@ function renderBarcode(barcode){
   currentBarcode=barcode
   document.getElementById("downloadBarcode").style.display="inline-block"
   document.getElementById("printBarcode").style.display="inline-block"
+
+  const {data,error}=await supabase.from('products').select('*').eq('barcode',barcode).single()
+  if(error){
+    console.error("Error fetching product details:",error)
+    document.getElementById("productDetails").innerHTML="<p>Unable to load product details.</p>"
+    return
+  }
+  const formattedDate=data.date_added
+    ?new Date(data.date_added).toLocaleString('en-IN',{
+      timeZone:'Asia/Kolkata',
+      year:'numeric',month:'short',day:'numeric'
+    })
+    :'-'
+
+  document.getElementById("productDetails").innerHTML=`
+    <h3>Product Details</h3>
+    <p><strong>Name:</strong> ${data.name}</p>
+    <p><strong>Variant:</strong> ${data.variant||'-'}</p>
+    <p><strong>Class:</strong> ${data.class_of_product||'-'}</p>
+    <p><strong>Brand:</strong> ${data.brand}</p>
+    <p><strong>Total Qty:</strong> ${data.quantity}</p>
+    <p><strong>On-Hold Qty:</strong> ${data.qty_on_hold||0}</p>
+    <p><strong>Active Qty:</strong> ${data.qty_active||0}</p>
+    <p><strong>Price:</strong> ₹${data.price}</p>
+    <p><strong>Total Value:</strong> ₹${(data.quantity*data.price).toFixed(2)}</p>
+    <p><strong>Shelf:</strong> ${data.shelf_code||'-'}</p>
+    <p><strong>Expiry:</strong> ${data.expiry_date||'-'}</p>
+    <p><strong>Date Added:</strong> ${formattedDate}</p>
+  `
 }
 window.renderBarcode=renderBarcode
 
