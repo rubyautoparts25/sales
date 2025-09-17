@@ -13,6 +13,78 @@ function generateBarcode(){
   return Math.random().toString(36).substring(2,10).toUpperCase()
 }
 
+function generateBarcodeWithVendorInfo(){
+  const currentBatch = sessionStorage.getItem('currentBatch');
+  if (currentBatch) {
+    const batchData = JSON.parse(currentBatch);
+    const randomCode = Math.random().toString(36).substring(2,10).toUpperCase();
+    return `${randomCode}-${batchData.vendorName.substring(0,3).toUpperCase()}-${batchData.invoiceNumber}`;
+  }
+  return generateBarcode();
+}
+
+function getCurrentBatchInfo(){
+  const currentBatch = sessionStorage.getItem('currentBatch');
+  return currentBatch ? JSON.parse(currentBatch) : null;
+}
+
+function extractBatchIdFromBarcode(barcode) {
+  if (!barcode) return null;
+  // Check if we have batch tracking data (try localStorage first, then sessionStorage)
+  let batchTracking = localStorage.getItem('batchTracking');
+  if (!batchTracking) {
+    batchTracking = sessionStorage.getItem('batchTracking');
+  }
+  if (batchTracking) {
+    const tracking = JSON.parse(batchTracking);
+    return tracking[barcode]?.batchId || null;
+  }
+  return null;
+}
+
+function extractVendorFromBarcode(barcode) {
+  if (!barcode) return null;
+  // First try to get from batch tracking data (try localStorage first, then sessionStorage)
+  let batchTracking = localStorage.getItem('batchTracking');
+  if (!batchTracking) {
+    batchTracking = sessionStorage.getItem('batchTracking');
+  }
+  if (batchTracking) {
+    const tracking = JSON.parse(batchTracking);
+    if (tracking[barcode]?.vendorName) {
+      return tracking[barcode].vendorName;
+    }
+  }
+  // Fallback to barcode format: RANDOMCODE-VENDOR-INVOICE
+  const parts = barcode.split('-');
+  if (parts.length >= 2) {
+    return parts[1];
+  }
+  return null;
+}
+
+function storeBatchTracking(barcode, batchInfo) {
+  // Store in both localStorage (persistent) and sessionStorage (current session)
+  const batchTracking = JSON.parse(localStorage.getItem('batchTracking') || sessionStorage.getItem('batchTracking') || '{}');
+  batchTracking[barcode] = {
+    batchId: batchInfo.batchId,
+    vendorName: batchInfo.vendorName,
+    invoiceNumber: batchInfo.invoiceNumber,
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem('batchTracking', JSON.stringify(batchTracking));
+  sessionStorage.setItem('batchTracking', JSON.stringify(batchTracking));
+}
+
+function loadExistingBatchTracking() {
+  // Load batch tracking data from localStorage (persistent) and sync to sessionStorage
+  const batchTracking = localStorage.getItem('batchTracking');
+  if (batchTracking) {
+    sessionStorage.setItem('batchTracking', batchTracking);
+    console.log('Loaded existing batch tracking data:', Object.keys(JSON.parse(batchTracking)).length, 'products');
+  }
+}
+
 window.filterInventory=function(){
   const query=document.getElementById('searchInput').value.toLowerCase()
   const rows=document.querySelectorAll('#inventoryTable tbody tr')
@@ -39,6 +111,19 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
     return
   }
 
+  // Check if batch exists
+  const batchInfo = getCurrentBatchInfo();
+  if (!batchInfo) {
+    const createBatch = confirm("No active batch found. Would you like to create a new batch first?");
+    if (createBatch) {
+      window.location.href = 'batch.html';
+      return;
+    } else {
+      alert("Please create a batch first to add inventory items.");
+      return;
+    }
+  }
+
   try{
     const {data:existing,error}=await supabase
       .from('products')
@@ -56,19 +141,21 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
 
       if(existingProduct.price===price){
         barcode=existingProduct.barcode
+        const updateData = {
+          quantity: existingProduct.quantity + quantity,
+          qty_on_hold: (existingProduct.qty_on_hold||0) + quantity,
+          shelf_code: shelf,
+          expiry_date: expiryDate
+        };
+        
         const {error:updateError}=await supabase
           .from('products')
-          .update({
-            quantity: existingProduct.quantity + quantity,
-            qty_on_hold: (existingProduct.qty_on_hold||0) + quantity,
-            shelf_code: shelf,
-            expiry_date: expiryDate
-          })
+          .update(updateData)
           .eq('id', existingProduct.id)
         if(updateError) throw updateError
       }else{
-        barcode=generateBarcode()
-        const {error:insertError}=await supabase.from('products').insert([{
+        barcode=generateBarcodeWithVendorInfo()
+        const insertData = {
           name,variant,class_of_product:classOfProduct,brand,
           quantity,
           qty_on_hold:quantity,
@@ -76,12 +163,14 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
           price,expiry_date:expiryDate,shelf_code:shelf,
           barcode,status:'on_hold',
           date_added:new Date().toISOString().split('T')[0]
-        }])
+        };
+        
+        const {error:insertError}=await supabase.from('products').insert([insertData])
         if(insertError) throw insertError
       }
     }else{
-      barcode=generateBarcode()
-      const {error:insertError}=await supabase.from('products').insert([{
+      barcode=generateBarcodeWithVendorInfo()
+      const insertData = {
         name,variant,class_of_product:classOfProduct,brand,
         quantity,
         qty_on_hold:quantity,
@@ -89,17 +178,35 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
         price,expiry_date:expiryDate,shelf_code:shelf,
         barcode,status:'on_hold',
         date_added:new Date().toISOString().split('T')[0]
-      }])
+      };
+      
+      const {error:insertError}=await supabase.from('products').insert([insertData])
       if(insertError) throw insertError
+    }
+
+    // Store batch tracking information
+    if (batchInfo) {
+      storeBatchTracking(barcode, batchInfo);
     }
 
     renderBarcode(barcode)
     alert(`"${name}" added/updated in inventory.`)
     form.reset()
     loadInventory()
+loadExistingBatchTracking()
   }catch(err){
     console.error("Insert error:",err)
-    alert("Something went wrong while adding the product.")
+    let errorMessage = "Something went wrong while adding the product.";
+    
+    if (err.message) {
+      errorMessage += `\n\nError details: ${err.message}`;
+    }
+    
+    if (err.details) {
+      errorMessage += `\n\nDetails: ${err.details}`;
+    }
+    
+    alert(errorMessage);
   }
 })
 
@@ -136,6 +243,8 @@ async function loadInventory(){
       <td>${product.price}</td>
       <td>${totalPrice}</td>
       <td>${product.shelf_code||'-'}</td>
+      <td>${extractBatchIdFromBarcode(product.barcode)||'-'}</td>
+      <td>${extractVendorFromBarcode(product.barcode)||'-'}</td>
       <td>${formattedDate}</td>
       <td>
         <button onclick="editProduct('${product.id}')">Edit</button>
@@ -156,6 +265,7 @@ window.deleteProduct=async function(id){
   }else{
     alert("Part removed.")
     loadInventory()
+loadExistingBatchTracking()
   }
 }
 
@@ -305,3 +415,4 @@ nameInput.addEventListener('input',async()=>{
 })
 
 loadInventory()
+loadExistingBatchTracking()
