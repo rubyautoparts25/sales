@@ -241,8 +241,8 @@ document.getElementById('printBarcode').addEventListener('click', async () => {
   const printContent = `
     <div style="text-align:center;font-family:Arial,sans-serif;font-size:12px;">
       ${document.getElementById('barcode').outerHTML}
-      <div style="margin-top:2px;font-size:25px;">${data.name}</div>
-      <div style="margin-top:2px;font-size:25px;">${dateCode}</div>
+      <div style="margin-top:2px;font-size:20px;">${data.name}</div>
+      <div style="margin-top:2px;font-size:17px;">${dateCode}</div>
     </div>
   `;
 
