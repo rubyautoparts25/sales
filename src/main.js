@@ -163,7 +163,7 @@ window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
 }
 
-function renderBarcode(barcode){
+async function renderBarcode(barcode){
   if(!barcode) return
   JsBarcode("#barcode",barcode,{
     format:"CODE128",
@@ -175,6 +175,35 @@ function renderBarcode(barcode){
   currentBarcode=barcode
   document.getElementById("downloadBarcode").style.display="inline-block"
   document.getElementById("printBarcode").style.display="inline-block"
+
+  const {data,error}=await supabase.from('products').select('*').eq('barcode',barcode).single()
+  if(error){
+    console.error("Error fetching product details:",error)
+    document.getElementById("productDetails").innerHTML="<p>Unable to load product details.</p>"
+    return
+  }
+  const formattedDate=data.date_added
+    ?new Date(data.date_added).toLocaleString('en-IN',{
+      timeZone:'Asia/Kolkata',
+      year:'numeric',month:'short',day:'numeric'
+    })
+    :'-'
+
+  document.getElementById("productDetails").innerHTML=`
+    <h3>Product Details</h3>
+    <p><strong>Name:</strong> ${data.name}</p>
+    <p><strong>Variant:</strong> ${data.variant||'-'}</p>
+    <p><strong>Class:</strong> ${data.class_of_product||'-'}</p>
+    <p><strong>Brand:</strong> ${data.brand}</p>
+    <p><strong>Total Qty:</strong> ${data.quantity}</p>
+    <p><strong>On-Hold Qty:</strong> ${data.qty_on_hold||0}</p>
+    <p><strong>Active Qty:</strong> ${data.qty_active||0}</p>
+    <p><strong>Price:</strong> ₹${data.price}</p>
+    <p><strong>Total Value:</strong> ₹${(data.quantity*data.price).toFixed(2)}</p>
+    <p><strong>Shelf:</strong> ${data.shelf_code||'-'}</p>
+    <p><strong>Expiry:</strong> ${data.expiry_date||'-'}</p>
+    <p><strong>Date Added:</strong> ${formattedDate}</p>
+  `
 }
 window.renderBarcode=renderBarcode
 
@@ -191,16 +220,40 @@ document.getElementById('downloadBarcode').addEventListener('click',()=>{
   URL.revokeObjectURL(url)
 })
 
-document.getElementById('printBarcode').addEventListener('click',()=>{
-  if(!currentBarcode) return alert("No barcode to print.")
-  const printContent=document.getElementById('barcode').outerHTML
-  const printWindow=window.open('','','width=400,height=200')
-  printWindow.document.write('<html><head><title>Print Barcode</title></head><body>')
-  printWindow.document.write(printContent)
-  printWindow.document.write('</body></html>')
-  printWindow.document.close()
-  printWindow.print()
-})
+document.getElementById('printBarcode').addEventListener('click', async () => {
+  if (!currentBarcode) return alert("No barcode to print.");
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('barcode', currentBarcode)
+    .single();
+
+  if (error) {
+    console.error("Error fetching product for print:", error);
+    return alert("Failed to fetch product details.");
+  }
+  const d = new Date(data.date_added);
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const dateCode = `${yy}${mm}${dd}`;
+  const printContent = `
+    <div style="text-align:center;font-family:Arial,sans-serif;font-size:12px;">
+      ${document.getElementById('barcode').outerHTML}
+      <div style="margin-top:2px;font-size:10px;">${data.name}</div>
+      <div style="margin-top:2px;font-size:10px;">${dateCode}</div>
+    </div>
+  `;
+
+  const printWindow = window.open('', '', 'width=200,height=150');
+  printWindow.document.write('<html><head><title>Print Barcode</title></head><body>');
+  printWindow.document.write(printContent);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+});
 
 const nameInput=document.getElementById('name')
 const suggestions=document.createElement('ul')
