@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruby Auto Parts - New Database Setup Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .content {
+            padding: 40px;
+        }
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .step h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .feature-card h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Ruby Auto Parts</h1>
+            <p>New Database Setup Guide with Batch Functionality</p>
+        </div>
+        
+        <div class="content">
+            <div class="success">
+                <strong>✅ Ready to Setup!</strong> This guide will help you create a new Supabase database with batch tracking functionality for your Ruby Auto Parts inventory system.
+            </div>
+
+            <h2>📋 Prerequisites</h2>
+            <ul>
+                <li>Supabase account (free tier available)</li>
+                <li>Access to your current Ruby Auto Parts codebase</li>
+                <li>Basic understanding of database concepts</li>
+            </ul>
+
+            <h2>🚀 Setup Steps</h2>
+
+            <div class="step">
+                <h3><span class="step-number">1</span>Create New Supabase Project</h3>
+                <ol>
+                    <li>Go to <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+                    <li>Click <strong>"New Project"</strong></li>
+                    <li>Choose your organization</li>
+                    <li>Enter project name: <code>Ruby Auto Parts - Batch</code></li>
+                    <li>Set a strong database password (save this!)</li>
+                    <li>Choose a region close to you</li>
+                    <li>Click <strong>"Create new project"</strong></li>
+                </ol>
+                <div class="warning">
+                    <strong>⚠️ Important:</strong> Save your database password securely. You'll need it for future access.
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">2</span>Get Database Credentials</h3>
+                <ol>
+                    <li>In your new project, go to <strong>Settings</strong> → <strong>API</strong></li>
+                    <li>Copy the <strong>Project URL</strong> (looks like: <code>https://your-project.supabase.co</code>)</li>
+                    <li>Copy the <strong>anon public key</strong> (starts with <code>eyJ...</code>)</li>
+                </ol>
+                <div class="highlight">
+                    <strong>💡 Tip:</strong> Keep these credentials handy - you'll need them to update your application configuration.
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">3</span>Run Database Setup Script</h3>
+                <ol>
+                    <li>Go to <strong>SQL Editor</strong> in your Supabase dashboard</li>
+                    <li>Click <strong>"New Query"</strong></li>
+                    <li>Copy the SQL script below and paste it into the editor</li>
+                    <li>Click <strong>"Run"</strong> button</li>
+                    <li>Wait for all tables to be created successfully</li>
+                </ol>
+                
+                <h4>📄 SQL Setup Script:</h4>
+                <div class="code-block" id="sqlScript">
+-- Complete Database Setup for Ruby Auto Parts with Batch Functionality
+-- Run this in your new Supabase SQL Editor
+
+-- Create products table with batch support
+CREATE TABLE products (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  variant VARCHAR(255) NOT NULL,
+  class_of_product VARCHAR(100),
+  brand VARCHAR(255) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 0,
+  qty_on_hold INTEGER DEFAULT 0,
+  qty_active INTEGER DEFAULT 0,
+  price DECIMAL(10,2) NOT NULL,
+  shelf_code VARCHAR(50),
+  expiry_date DATE,
+  barcode VARCHAR(50) UNIQUE,
+  batch_id VARCHAR(8),
+  date_added DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create minimal batches table (4 columns only)
+CREATE TABLE batches (
+  batch_id VARCHAR(8) PRIMARY KEY,
+  vendor_name VARCHAR(255) NOT NULL,
+  arrival_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  vendor_invoice VARCHAR(100) NOT NULL
+);
+
+-- Create bills table
+CREATE TABLE bills (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_phone VARCHAR(20),
+  total_amount DECIMAL(10,2) NOT NULL,
+  total_discount DECIMAL(10,2) DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'completed',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create sales table
+CREATE TABLE sales (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  quantity_sold INTEGER NOT NULL,
+  unit_price DECIMAL(10,2) NOT NULL,
+  discount DECIMAL(10,2) DEFAULT 0,
+  line_total DECIMAL(10,2) NOT NULL,
+  batch_id VARCHAR(8),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create suppliers table
+CREATE TABLE suppliers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  contact_person VARCHAR(255),
+  phone VARCHAR(20),
+  email VARCHAR(255),
+  address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add foreign key constraint for batch_id
+ALTER TABLE products ADD CONSTRAINT fk_products_batch_id 
+  FOREIGN KEY (batch_id) REFERENCES batches(batch_id);
+
+-- Add indexes for performance
+CREATE INDEX idx_products_batch_id ON products(batch_id);
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_barcode ON products(barcode);
+CREATE INDEX idx_products_qty_active ON products(qty_active);
+CREATE INDEX idx_batches_vendor_name ON batches(vendor_name);
+CREATE INDEX idx_batches_arrival_timestamp ON batches(arrival_timestamp);
+CREATE INDEX idx_sales_batch_id ON sales(batch_id);
+CREATE INDEX idx_sales_bill_id ON sales(bill_id);
+CREATE INDEX idx_sales_product_id ON sales(product_id);
+CREATE INDEX idx_bills_customer_name ON bills(customer_name);
+CREATE INDEX idx_bills_created_at ON bills(created_at);
+
+-- Add constraints
+ALTER TABLE products ADD CONSTRAINT chk_quantity_positive 
+  CHECK (quantity >= 0);
+
+ALTER TABLE products ADD CONSTRAINT chk_qty_active_positive 
+  CHECK (qty_active >= 0);
+
+ALTER TABLE products ADD CONSTRAINT chk_qty_on_hold_positive 
+  CHECK (qty_on_hold >= 0);
+
+ALTER TABLE products ADD CONSTRAINT chk_price_positive 
+  CHECK (price > 0);
+
+-- Enable Row Level Security
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies (allow all operations for now)
+CREATE POLICY "Allow all operations on products" ON products
+  FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on bills" ON bills
+  FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on sales" ON sales
+  FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on suppliers" ON suppliers
+  FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on batches" ON batches
+  FOR ALL USING (true);
+
+-- Create function to update qty_active when quantity or qty_on_hold changes
+CREATE OR REPLACE FUNCTION update_qty_active()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.qty_active = GREATEST(NEW.quantity - COALESCE(NEW.qty_on_hold, 0), 0);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically update qty_active
+CREATE TRIGGER trigger_update_qty_active
+  BEFORE INSERT OR UPDATE ON products
+  FOR EACH ROW
+  EXECUTE FUNCTION update_qty_active();
+
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers for updated_at
+CREATE TRIGGER trigger_products_updated_at
+  BEFORE UPDATE ON products
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Insert sample data
+INSERT INTO batches (batch_id, vendor_name, arrival_timestamp, vendor_invoice) VALUES
+('A1B2C3D4', 'ABC Auto Parts', '2025-01-15 10:30:00+00', 'INV-001'),
+('X9Y8Z7W6', 'XYZ Motors', '2025-01-16 14:45:00+00', 'INV-002'),
+('P5Q4R3S2', 'PQR Industries', '2025-01-17 09:15:00+00', 'INV-003');
+
+INSERT INTO products (name, variant, class_of_product, brand, quantity, price, shelf_code, barcode, batch_id) VALUES
+('Brake Pad', 'Ceramic', 'Brake', 'Bosch', 50, 1500.00, 'A1-B2', 'A1B2C3D4', 'A1B2C3D4'),
+('Oil Filter', 'Standard', 'Engine', 'Mahle', 30, 800.00, 'B2-C3', 'X9Y8Z7W6', 'X9Y8Z7W6'),
+('Air Filter', 'High Flow', 'Engine', 'K&N', 25, 1200.00, 'C3-D4', 'P5Q4R3S2', 'P5Q4R3S2');
+
+INSERT INTO suppliers (name, contact_person, phone, email, address) VALUES
+('ABC Auto Parts', 'John Smith', '+91-9876543210', 'john@abcautoparts.com', '123 Main St, Mumbai'),
+('XYZ Motors', 'Jane Doe', '+91-9876543211', 'jane@xyzmotors.com', '456 Park Ave, Delhi'),
+('PQR Industries', 'Bob Johnson', '+91-9876543212', 'bob@pqrindustries.com', '789 Business Rd, Bangalore');
+                </div>
+                <button class="copy-btn" onclick="copyToClipboard('sqlScript')">📋 Copy SQL Script</button>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">4</span>Update Application Configuration</h3>
+                <ol>
+                    <li>Open <code>src/supabaseClient.js</code> in your codebase</li>
+                    <li>Replace the URL and key with your new database credentials</li>
+                </ol>
+                
+                <h4>📄 Updated Configuration:</h4>
+                <div class="code-block" id="configScript">
+import { createClient } from '@supabase/supabase-js';
+
+export const supabase = createClient(
+  'YOUR_NEW_PROJECT_URL_HERE',
+  'YOUR_NEW_ANON_KEY_HERE'
+);
+                </div>
+                <button class="copy-btn" onclick="copyToClipboard('configScript')">📋 Copy Config</button>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">5</span>Test the Application</h3>
+                <ol>
+                    <li>Open <code>inventory.html</code> in your browser</li>
+                    <li>Try adding a new product with batch information</li>
+                    <li>Verify that batch data appears in the inventory table</li>
+                    <li>Check that batch records are created in the database</li>
+                </ol>
+            </div>
+
+            <h2>✨ What's Included</h2>
+            <div class="feature-list">
+                <div class="feature-card">
+                    <h4>🗄️ Complete Database Schema</h4>
+                    <ul>
+                        <li>All existing tables (products, bills, sales, suppliers)</li>
+                        <li>New batches table with 4 minimal columns</li>
+                        <li>Proper foreign key relationships</li>
+                        <li>Performance indexes</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 Batch Functionality</h4>
+                    <ul>
+                        <li>8-character batch IDs (auto-generated)</li>
+                        <li>Vendor name tracking</li>
+                        <li>Arrival timestamp (date + time)</li>
+                        <li>Vendor invoice tracking</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔧 Advanced Features</h4>
+                    <ul>
+                        <li>Row Level Security enabled</li>
+                        <li>Automatic quantity calculations</li>
+                        <li>Sample data for testing</li>
+                        <li>Product-batch linking</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Inventory Display</h4>
+                    <ul>
+                        <li>Batch ID column in inventory table</li>
+                        <li>Vendor column in inventory table</li>
+                        <li>Batch information in product details</li>
+                        <li>Search and filter capabilities</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>🎉 Setup Complete!</strong> Your new database is ready to use with full batch functionality. All existing features are preserved, and you now have comprehensive batch tracking capabilities.
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="inventory.html" class="btn">🚀 Open Inventory System</a>
+                <a href="https://supabase.com" target="_blank" class="btn btn-secondary">📊 Supabase Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                // Show success feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#28a745';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy to clipboard. Please select and copy manually.');
+            });
+        }
+    </script>
+</body>
+</html>
+

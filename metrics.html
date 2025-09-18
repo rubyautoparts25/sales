@@ -161,16 +161,16 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-const db = createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
+const supabase = createClient(
+      'https://bjbacpisdkcmzaqsjwmy.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqYmFjcGlzZGtjbXphcXNqd215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMzA4OTksImV4cCI6MjA3MzcwNjg5OX0.EKeiwKNCWEXtKvJMvOkhGBaHAnFbQXtE5f_ASHUN0-s'
 )
 
 let salesChartInstance, topChartInstance
 
 async function loadKPIs() {
-  const { data: products } = await db.from('products').select('*')
-  const { data: bills } = await db.from('bills').select('*')
+  const { data: products } = await supabase.from('products').select('*')
+  const { data: bills } = await supabase.from('bills').select('*')
   document.getElementById('totalProducts').textContent = products.length
   document.getElementById('activeStock').textContent = products.reduce((sum,p)=>sum+(p.qty_active||0),0)
   document.getElementById('holdStock').textContent = products.reduce((sum,p)=>sum+(p.qty_on_hold||0),0)
@@ -179,7 +179,7 @@ async function loadKPIs() {
 }
 
 async function loadInventory() {
-  const { data: products } = await db.from('products').select('*')
+  const { data: products } = await supabase.from('products').select('*')
   const tbody = document.querySelector('#inventoryTable tbody')
   tbody.innerHTML = ''
   products.forEach(p=>{
@@ -204,17 +204,17 @@ window.updateProduct = async (id,value,column)=>{
   let updateObj={}
   updateObj[column] = ['quantity','qty_on_hold','price'].includes(column)?parseFloat(value):value
   if(column==='quantity'||column==='qty_on_hold'){
-    const { data: old } = await db.from('products').select('quantity,qty_on_hold').eq('id',id).single()
+    const { data: old } = await supabase.from('products').select('quantity,qty_on_hold').eq('id',id).single()
     updateObj.qty_active = Math.max((updateObj.quantity||old.quantity)-(updateObj.qty_on_hold||old.qty_on_hold),0)
   }
-  await db.from('products').update(updateObj).eq('id',id)
+  await supabase.from('products').update(updateObj).eq('id',id)
   loadInventory()
   loadKPIs()
 }
 
 window.deleteProduct = async (id)=>{
   if(!confirm("Delete product?")) return
-  await db.from('products').delete().eq('id',id)
+  await supabase.from('products').delete().eq('id',id)
   loadInventory()
   loadKPIs()
 }
@@ -226,7 +226,7 @@ async function loadSales(period){
   if(period==='weekly') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-7)
   if(period==='monthly') from=new Date(now.getFullYear(),now.getMonth()-1,now.getDate())
   if(period==='yearly') from=new Date(now.getFullYear()-1,now.getMonth(),now.getDate())
-  const { data: bills } = await db.from('bills').select('*').gte('created_at',from.toISOString())
+  const { data: bills } = await supabase.from('bills').select('*').gte('created_at',from.toISOString())
   const dailyTotals = {}
   bills.forEach(b=>{
     const d = new Date(b.created_at).toLocaleDateString('en-IN')
@@ -242,11 +242,11 @@ async function loadSales(period){
 }
 
 async function loadTopSelling() {
-  const { data: sales } = await db.from('sales').select('product_id,quantity_sold')
+  const { data: sales } = await supabase.from('sales').select('product_id,quantity_sold')
   const tally = {}
   sales.forEach(s=>{ tally[s.product_id] = (tally[s.product_id]||0) + s.quantity_sold })
   const ids = Object.keys(tally)
-  const { data: products } = await db.from('products').select('id,name,variant')
+  const { data: products } = await supabase.from('products').select('id,name,variant')
   const labels = []
   const values = []
   ids.forEach(id=>{
@@ -262,13 +262,13 @@ async function loadTopSelling() {
 }
 
 async function loadDiscounts() {
-  const { data: bills } = await db.from('bills').select('total_discount')
+  const { data: bills } = await supabase.from('bills').select('total_discount')
   const totalDiscount = bills.reduce((sum,b)=>sum+(b.total_discount||0),0)
   document.getElementById('discountInfo').innerHTML = `<h3>Discounts</h3><p>Total: ₹${totalDiscount.toFixed(2)}</p><p>Average: ₹${(totalDiscount/bills.length).toFixed(2)}</p>`
 }
 
 async function loadCustomers() {
-  const { data: bills } = await db.from('bills').select('customer_phone')
+  const { data: bills } = await supabase.from('bills').select('customer_phone')
   const countMap = {}
   bills.forEach(b=>{
     const phone = b.customer_phone||'Unknown'
@@ -279,7 +279,7 @@ async function loadCustomers() {
 }
 
 async function loadRecent() {
-  const { data: bills } = await db.from('bills').select('*').order('created_at',{ascending:false}).limit(10)
+  const { data: bills } = await supabase.from('bills').select('*').order('created_at',{ascending:false}).limit(10)
   const tbody = document.querySelector('#billsTable tbody')
   tbody.innerHTML = ''
   bills.forEach(b=>{

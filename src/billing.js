@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabase=createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
+  'https://bjbacpisdkcmzaqsjwmy.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqYmFjcGlzZGtjbXphcXNqd215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMzA4OTksImV4cCI6MjA3MzcwNjg5OX0.EKeiwKNCWEXtKvJMvOkhGBaHAnFbQXtE5f_ASHUN0-s'
 )
 
 let cart=[]
@@ -20,7 +20,7 @@ document.getElementById('customerForm').addEventListener('submit',e=>{
 
 document.getElementById('barcodeInput').addEventListener('input',e=>{
   const code=e.target.value.trim()
-  if(code.length<6||scanLock)return
+  if(code.length<8||scanLock)return
   scanLock=true
   setTimeout(()=>{scanLock=false},300)
   addScannedItem(code)
@@ -113,14 +113,12 @@ function showSearchResults(products){
 
 function addProductToCart(product){
   if(product.qty_active<=0){alert("No active stock available");return}
-  const discountInput=parseFloat(document.getElementById('discountInput').value)||0
-  const finalPrice=product.price-(product.price*discountInput/100)
   const existingIndex=cart.findIndex(item=>item.id===product.id)
   if(existingIndex!==-1){
     if(cart[existingIndex].qty+1>product.qty_active){alert("Not enough active stock");return}
     cart[existingIndex].qty+=1
   }else{
-    cart.push({id:product.id,name:product.name,price:product.price,discount:discountInput,finalPrice,qty:1,active:product.qty_active})
+    cart.push({id:product.id,name:product.name,price:product.price,qty:1,active:product.qty_active})
   }
   renderCart()
 }
@@ -130,14 +128,12 @@ async function addScannedItem(code){
     const{data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
     if(error||!data){alert("Product not found");return}
     if(data.qty_active<=0){alert("No active stock available");return}
-    const discountInput=parseFloat(document.getElementById('discountInput').value)||0
-    const finalPrice=data.price-(data.price*discountInput/100)
     const existingIndex=cart.findIndex(item=>item.id===data.id)
     if(existingIndex!==-1){
       if(cart[existingIndex].qty+1>data.qty_active){alert("Not enough active stock");return}
       cart[existingIndex].qty+=1
     }else{
-      cart.push({id:data.id,name:data.name,price:data.price,discount:discountInput,finalPrice,qty:1,active:data.qty_active})
+      cart.push({id:data.id,name:data.name,price:data.price,qty:1,active:data.qty_active})
     }
     renderCart()
   }catch(err){
@@ -151,16 +147,12 @@ function renderCart(){
   tbody.innerHTML=''
   let total=0
   cart.forEach((item,idx)=>{
-    const lineTotal=item.finalPrice*item.qty
+    const lineTotal=item.price*item.qty
     total+=lineTotal
     const row=document.createElement('tr')
     row.innerHTML=`
       <td>${item.name}</td>
-      <td>${item.price.toFixed(2)}</td>
-      <td><input type="number" value="${item.discount}" min="0" max="100" onchange="updateDiscount(${idx},this.value)"></td>
-      <td>${item.finalPrice.toFixed(2)}</td>
-      <td><input type="number" value="${item.qty}" min="1" max="${item.active}" onchange="updateQty(${idx},this.value)"></td>
-      <td>${lineTotal.toFixed(2)}</td>
+      <td>₹${item.price.toFixed(2)}</td>
       <td><button onclick="removeItem(${idx})">X</button></td>
     `
     tbody.appendChild(row)
@@ -168,20 +160,6 @@ function renderCart(){
   document.getElementById('grandTotal').textContent=total.toFixed(2)
 }
 
-window.updateQty=(idx,val)=>{
-  const q=parseInt(val)
-  if(q>cart[idx].active){alert("Exceeds active stock");return}
-  cart[idx].qty=q
-  renderCart()
-}
-
-window.updateDiscount=(idx,val)=>{
-  const discount=parseFloat(val)||0
-  const item=cart[idx]
-  item.discount=discount
-  item.finalPrice=item.price-(item.price*discount/100)
-  renderCart()
-}
 
 window.removeItem=idx=>{
   cart.splice(idx,1)
@@ -191,7 +169,7 @@ window.removeItem=idx=>{
 document.getElementById('finalizeBill').addEventListener('click',async()=>{
   if(!customer.name){alert("Set customer first");return}
   if(cart.length===0){alert("Cart is empty");return}
-  const total=cart.reduce((sum,i)=>sum+(i.finalPrice*i.qty),0)
+  const total=cart.reduce((sum,i)=>sum+(i.price*i.qty),0)
   try{
     const{data:bill,error:billErr}=await supabase.from('bills').insert([{
       customer_name:customer.name,
@@ -204,7 +182,8 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
         product_id:item.id,
         quantity_sold:item.qty,
         bill_id:bill.id,
-        price_at_sale:item.price
+        unit_price:item.price,
+        line_total:item.price * item.qty
       })
       if(saleError)console.error("Sale insert error:",saleError)
       const{data:product,error:fetchError}=await supabase.from('products').select('*').eq('id',item.id).single()

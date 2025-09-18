@@ -9,13 +9,8 @@
       window.location.href = 'login.html';
     }
     
-    function checkPassword() {
-      const password=prompt("Enter passcode to access analytics:")
-      if(password==="caliberparts2025") {
-        window.location.href="billing.html"
-      } else {
-        alert("Incorrect password. Access denied.")
-      }
+    function goToBilling() {
+      window.location.href="billing.html"
     }
     function checkMetrics(){
       const password=prompt("Enter passcode to access metrics:")
@@ -211,6 +206,14 @@
       <input type="date" id="expiry" placeholder="Expiry">
       <input type="text" id="shelf" placeholder="Shelf Code" required>
     </div>
+    <div class="form-row">
+      <input type="text" id="batchId" placeholder="Batch ID (8 chars)" maxlength="8" required>
+      <input type="text" id="vendorName" placeholder="Vendor Name" required>
+    </div>
+    <div class="form-row">
+      <input type="text" id="vendorInvoice" placeholder="Vendor Invoice" required>
+      <input type="datetime-local" id="arrivalTime" required>
+    </div>
     <button type="submit">Add Product</button>
   </form>
 
@@ -229,6 +232,8 @@
         <th>Price</th>
         <th>Total Value</th>
         <th>Shelf</th>
+        <th>Batch ID</th>
+        <th>Vendor</th>
         <th>Date Added</th>
         <th>Actions</th>
       </tr>
@@ -246,7 +251,7 @@
     <div class="nav-buttons">
       <button onclick="window.location.href='active-inventory.html'">Active Inventory</button>
       <button onclick="window.location.href='onhold-inventory.html'">On-Hold Inventory</button>
-      <button onclick="checkPassword()">Go to Billing</button>
+      <button onclick="goToBilling()">Go to Billing</button>
       <button onclick="checkMetrics()">View Metrics</button>
       <button onclick="window.location.href='activate.html'">Activate Products</button>
     </div>

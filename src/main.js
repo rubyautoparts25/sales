@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import JsBarcode from 'jsbarcode'
 
 const supabase=createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
+  'https://bjbacpisdkcmzaqsjwmy.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqYmFjcGlzZGtjbXphcXNqd215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMzA4OTksImV4cCI6MjA3MzcwNjg5OX0.EKeiwKNCWEXtKvJMvOkhGBaHAnFbQXtE5f_ASHUN0-s'
 )
 
 let currentBarcode=null
@@ -12,6 +12,31 @@ let currentBarcode=null
 function generateBarcode(){
   return Math.random().toString(36).substring(2,10).toUpperCase()
 }
+
+function generateBatchId(){
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+// Set default values for batch form
+document.addEventListener('DOMContentLoaded', function() {
+  const batchIdInput = document.getElementById('batchId')
+  const arrivalTimeInput = document.getElementById('arrivalTime')
+  
+  if (batchIdInput) {
+    batchIdInput.value = generateBatchId()
+  }
+  
+  if (arrivalTimeInput) {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    arrivalTimeInput.value = now.toISOString().slice(0, 16)
+  }
+})
 
 window.filterInventory=function(){
   const query=document.getElementById('searchInput').value.toLowerCase()
@@ -33,13 +58,29 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
   const price=parseFloat(form.price.value)
   const expiryDate=form.expiry.value||null
   const shelf=form.shelf.value.trim()
+  const batchId=form.batchId.value.trim()
+  const vendorName=form.vendorName.value.trim()
+  const vendorInvoice=form.vendorInvoice.value.trim()
+  const arrivalTime=form.arrivalTime.value
 
-  if(!name||!variant||!classOfProduct||!brand||isNaN(quantity)||isNaN(price)||!shelf){
+  if(!name||!variant||!classOfProduct||!brand||isNaN(quantity)||isNaN(price)||!shelf||!batchId||!vendorName||!vendorInvoice||!arrivalTime){
     alert("Please fill in all required fields correctly.")
     return
   }
 
   try{
+    // First, create or update batch
+    const {error: batchError} = await supabase
+      .from('batches')
+      .upsert([{
+        batch_id: batchId,
+        vendor_name: vendorName,
+        arrival_timestamp: arrivalTime,
+        vendor_invoice: vendorInvoice
+      }], { onConflict: 'batch_id' })
+    
+    if(batchError) throw batchError
+
     const {data:existing,error}=await supabase
       .from('products')
       .select('*')
@@ -62,7 +103,8 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
             quantity: existingProduct.quantity + quantity,
             qty_on_hold: (existingProduct.qty_on_hold||0) + quantity,
             shelf_code: shelf,
-            expiry_date: expiryDate
+            expiry_date: expiryDate,
+            batch_id: batchId
           })
           .eq('id', existingProduct.id)
         if(updateError) throw updateError
@@ -74,8 +116,9 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
           qty_on_hold:quantity,
           qty_active:0,
           price,expiry_date:expiryDate,shelf_code:shelf,
-          barcode,status:'on_hold',
-          date_added:new Date().toISOString().split('T')[0]
+          barcode,
+          date_added:new Date().toISOString().split('T')[0],
+          batch_id: batchId
         }])
         if(insertError) throw insertError
       }
@@ -87,8 +130,9 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
         qty_on_hold:quantity,
         qty_active:0,
         price,expiry_date:expiryDate,shelf_code:shelf,
-        barcode,status:'on_hold',
-        date_added:new Date().toISOString().split('T')[0]
+        barcode,
+        date_added:new Date().toISOString().split('T')[0],
+        batch_id: batchId
       }])
       if(insertError) throw insertError
     }
@@ -104,7 +148,17 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
 })
 
 async function loadInventory(){
-  const {data,error}=await supabase.from('products').select('*')
+  const {data,error}=await supabase
+    .from('products')
+    .select(`
+      *,
+      batches!inner(
+        batch_id,
+        vendor_name,
+        arrival_timestamp,
+        vendor_invoice
+      )
+    `)
   if(error){
     console.error("Error loading inventory:",error)
     return
@@ -124,6 +178,7 @@ async function loadInventory(){
     const minStock=product.min_stock||20
     const quantityColor=product.quantity<minStock?'red':'black'
 
+    const batch = product.batches || {}
     const row=document.createElement('tr')
     row.innerHTML=`
       <td>${product.name}</td>
@@ -136,6 +191,8 @@ async function loadInventory(){
       <td>${product.price}</td>
       <td>${totalPrice}</td>
       <td>${product.shelf_code||'-'}</td>
+      <td>${batch.batch_id||'-'}</td>
+      <td>${batch.vendor_name||'-'}</td>
       <td>${formattedDate}</td>
       <td>
         <button onclick="editProduct('${product.id}')">Edit</button>
@@ -233,7 +290,7 @@ document.getElementById('printBarcode').addEventListener('click', async () => {
     console.error("Error fetching product for print:", error);
     return alert("Failed to fetch product details.");
   }
-  const d = new Date(data.date_added);
+  const d = new Date();
   const yy = String(d.getFullYear()).slice(-2);
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
