@@ -207,8 +207,10 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
       
       // Use the database function to sell inventory (FIFO)
       const{error:sellError}=await supabase.rpc('sell_inventory', {
-        product_id: item.id,
-        quantity_to_sell: item.qty
+        p_product_id: item.id,
+        p_quantity: item.qty,
+        p_price: item.price,
+        p_bill_id: bill.id
       })
       if(sellError)console.error("Sell inventory error:",sellError)
     }

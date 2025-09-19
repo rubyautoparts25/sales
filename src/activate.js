@@ -4,15 +4,21 @@ let currentProduct = null;
 
 async function fetchProductByBarcode(barcode) {
   try {
+    // First try to get from onhold_inventory view
+    const { data: onholdData, error: onholdError } = await supabase
+      .from('onhold_inventory')
+      .select('*')
+      .eq('barcode', barcode)
+      .single();
+
+    if (!onholdError && onholdData && onholdData.total_on_hold > 0) {
+      return onholdData;
+    }
+
+    // If not found in onhold_inventory, try products table
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        inventory!inner(
-          qty_on_hold,
-          qty_active
-        )
-      `)
+      .select('*')
       .eq('barcode', barcode)
       .single();
 
@@ -21,14 +27,19 @@ async function fetchProductByBarcode(barcode) {
       return null;
     }
 
-    // Calculate total on-hold quantity from inventory
-    const totalOnHold = data.inventory.reduce((sum, inv) => sum + (inv.qty_on_hold || 0), 0);
-    
-    if (totalOnHold <= 0) {
+    // Check if product has any on-hold inventory
+    const { data: inventoryData, error: inventoryError } = await supabase
+      .from('inventory')
+      .select('qty_on_hold')
+      .eq('product_id', data.id)
+      .gt('qty_on_hold', 0);
+
+    if (inventoryError || !inventoryData || inventoryData.length === 0) {
       showResult('This product has no quantity on hold to activate.', 'error');
       return null;
     }
 
+    const totalOnHold = inventoryData.reduce((sum, inv) => sum + (inv.qty_on_hold || 0), 0);
     return { ...data, total_on_hold: totalOnHold };
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -85,8 +96,8 @@ async function activateProductQuantity(quantityToActivate) {
   try {
     // Use the database function to activate inventory
     const { data, error } = await supabase.rpc('activate_inventory', {
-      product_id: currentProduct.id,
-      quantity_to_activate: quantityToActivate
+      p_product_id: currentProduct.id,
+      p_quantity: quantityToActivate
     });
 
     if (error) {
