@@ -20,7 +20,7 @@ export function generateRandomBarcode() {
 
 export async function barcodeExists(barcode) {
   const { data, error } = await supabase
-    .from('products')
+    .from('inventory')
     .select('id')
     .eq('barcode', barcode)
     .single();
@@ -127,18 +127,14 @@ export async function getProductByBarcode(barcode) {
 
 // Inventory operations
 export async function addInventory(productId, batchId, quantity, expiryDate = null) {
-  const { data, error } = await supabase
-    .from('inventory')
-    .insert([{
-      product_id: productId,
-      batch_id: batchId,
-      quantity_on_hold: quantity,
-      quantity_active: 0,
-      expiry_date: expiryDate
-    }])
-    .select()
-    .single();
-  
+  // Use the database function to generate unique barcode
+  const { data, error } = await supabase.rpc('add_inventory_with_barcode', {
+    p_product_id: productId,
+    p_batch_id: batchId,
+    p_quantity: quantity,
+    p_expiry_date: expiryDate
+  });
+
   if (error) throw error;
   return data;
 }
@@ -267,6 +263,41 @@ export async function updateProduct(productId, updates) {
     .select()
     .single();
   
+  if (error) throw error;
+  return data;
+}
+
+// Get barcode information for a specific inventory item
+export async function getBarcodeInfo(barcode) {
+  const { data, error } = await supabase
+    .from('batch_details')
+    .select('*')
+    .eq('barcode', barcode)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Get all barcodes for a specific product
+export async function getProductBarcodes(productId) {
+  const { data, error } = await supabase
+    .from('inventory')
+    .select(`
+      barcode,
+      quantity_on_hold,
+      quantity_active,
+      expiry_date,
+      batches!inner(
+        batch_id,
+        batch_date,
+        vendor_name,
+        vendor_invoice
+      )
+    `)
+    .eq('product_id', productId)
+    .order('created_at', { ascending: true });
+
   if (error) throw error;
   return data;
 }

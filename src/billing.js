@@ -36,11 +36,8 @@ async function searchProducts(query){
       return
     }
     if(!data||data.length===0){
-      console.log("No products found for:",query)
       return
     }
-    
-    console.log("Found products:",data)
     // Show search results in a simple dropdown
     showSearchResults(data)
   }catch(err){

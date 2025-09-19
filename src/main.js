@@ -8,6 +8,8 @@ import {
   addInventory, 
   loadInventory as loadInventoryFromDB,
   deleteProduct as deleteProductFromDB,
+  getProductBarcodes,
+  getBarcodeInfo,
   supabase 
 } from './database.js'
 
@@ -148,7 +150,7 @@ async function loadInventory(){
         <td>
           <button onclick="editProduct('${product.id}')">Edit</button>
           <button onclick="deleteProduct('${product.id}')">Delete</button>
-          <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
+          <button onclick="showProductBarcodes('${product.id}')">View Barcodes</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -174,6 +176,62 @@ window.deleteProduct = async function(id) {
 
 window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
+}
+
+// Show all barcodes for a product
+window.showProductBarcodes = async function(productId) {
+  try {
+    const barcodes = await getProductBarcodes(productId);
+    
+    if (barcodes.length === 0) {
+      alert('No barcodes found for this product.');
+      return;
+    }
+    
+    let barcodeList = 'Product Barcodes:\n\n';
+    barcodes.forEach((item, index) => {
+      barcodeList += `${index + 1}. Barcode: ${item.barcode}\n`;
+      barcodeList += `   Batch: ${item.batches.batch_id}\n`;
+      barcodeList += `   Vendor: ${item.batches.vendor_name}\n`;
+      barcodeList += `   Invoice: ${item.batches.vendor_invoice}\n`;
+      barcodeList += `   On Hold: ${item.quantity_on_hold}\n`;
+      barcodeList += `   Active: ${item.quantity_active}\n`;
+      if (item.expiry_date) {
+        barcodeList += `   Expiry: ${item.expiry_date}\n`;
+      }
+      barcodeList += '\n';
+    });
+    
+    // Show in a modal or alert
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = 'white';
+    modal.style.border = '2px solid #333';
+    modal.style.borderRadius = '8px';
+    modal.style.padding = '20px';
+    modal.style.maxWidth = '600px';
+    modal.style.maxHeight = '80vh';
+    modal.style.overflow = 'auto';
+    modal.style.zIndex = '10000';
+    modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+    
+    modal.innerHTML = `
+      <h3>Product Barcodes</h3>
+      <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${barcodeList}</pre>
+      <div style="text-align: center; margin-top: 15px;">
+        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+  } catch (error) {
+    console.error('Error fetching barcodes:', error);
+    alert('Failed to load barcodes: ' + error.message);
+  }
 }
 
 async function renderBarcode(barcode){
@@ -278,43 +336,96 @@ suggestions.id='suggestions'
 suggestions.style.position='absolute'
 suggestions.style.background='white'
 suggestions.style.border='1px solid #ccc'
+suggestions.style.borderRadius='4px'
+suggestions.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'
 suggestions.style.listStyle='none'
 suggestions.style.padding='0'
 suggestions.style.margin='0'
 suggestions.style.width=nameInput.offsetWidth+'px'
+suggestions.style.top='100%'
+suggestions.style.left='0'
+suggestions.style.zIndex='1000'
+suggestions.style.maxHeight='200px'
+suggestions.style.overflowY='auto'
+suggestions.style.display='none'
+
+// Make the parent container relative positioned
+nameInput.parentNode.style.position='relative'
 nameInput.parentNode.appendChild(suggestions)
 
 nameInput.addEventListener('input',async()=>{
   const query=nameInput.value.trim()
   suggestions.innerHTML=''
-  if(query.length<1) return
+  if(query.length<1) {
+    suggestions.style.display='none'
+    return
+  }
+  
+  suggestions.style.display='block'
 
   try {
+    // Use a more specific query to get unique products
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('part_name, variant, class, brand, price, shelf_code')
       .or(`part_name.ilike.%${query}%,variant.ilike.%${query}%`)
-      .limit(5);
+      .order('part_name')
+      .limit(20); // Get more results to filter from
 
     if (error) {
       console.error("Suggestion error:", error);
       return;
     }
 
+    // More robust deduplication - group by part_name, variant, and brand
+    const uniqueProducts = [];
+    const seen = new Set();
+    
     data.forEach(product => {
+      // Create a more specific key that includes brand to avoid false duplicates
+      const key = `${product.part_name.toLowerCase()}|${(product.variant || '').toLowerCase()}|${(product.brand || '').toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueProducts.push(product);
+      }
+    });
+
+    // Sort by relevance (exact matches first, then partial matches)
+    uniqueProducts.sort((a, b) => {
+      const aExact = a.part_name.toLowerCase().startsWith(query.toLowerCase());
+      const bExact = b.part_name.toLowerCase().startsWith(query.toLowerCase());
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return a.part_name.localeCompare(b.part_name);
+    });
+
+    // Limit to 5 unique suggestions
+    uniqueProducts.slice(0, 5).forEach(product => {
       const li = document.createElement('li');
       li.textContent = `${product.part_name} (${product.variant || ''})`;
-      li.style.padding = '5px';
+      li.style.padding = '8px 12px';
       li.style.cursor = 'pointer';
+      li.style.borderBottom = '1px solid #eee';
+      li.style.fontSize = '14px';
+      
+      // Add hover effect
+      li.addEventListener('mouseenter', () => {
+        li.style.backgroundColor = '#f5f5f5';
+      });
+      li.addEventListener('mouseleave', () => {
+        li.style.backgroundColor = 'white';
+      });
+      
       li.addEventListener('click', () => {
         nameInput.value = product.part_name;
         document.getElementById('variant').value = product.variant || '';
         document.getElementById('class_of_product').value = product.class?.trim() || '';
         document.getElementById('brand').value = product.brand || '';
-        document.getElementById('quantity').value = 0;
+        document.getElementById('quantity').value = 1;
         document.getElementById('price').value = product.price || 0;
         document.getElementById('shelf').value = product.shelf_code || '';
         document.getElementById('expiry').value = '';
+        suggestions.style.display = 'none';
         suggestions.innerHTML = '';
       });
       suggestions.appendChild(li);
@@ -323,5 +434,12 @@ nameInput.addEventListener('input',async()=>{
     console.error("Suggestion error:", error);
   }
 })
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+  if (!nameInput.contains(e.target) && !suggestions.contains(e.target)) {
+    suggestions.style.display = 'none';
+  }
+});
 
 loadInventory()
