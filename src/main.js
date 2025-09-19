@@ -1,89 +1,26 @@
 import './style.css'
-import { createClient } from '@supabase/supabase-js'
 import JsBarcode from 'jsbarcode'
-import { getSupabaseConfig } from '../supabase.config.js'
-
-// Initialize Supabase client with configuration
-const config = getSupabaseConfig()
-const supabase = createClient(config.url, config.anonKey)
+import { 
+  generateUniqueBarcode, 
+  createBatch, 
+  findProduct, 
+  createProduct, 
+  addInventory, 
+  loadInventory as loadInventoryFromDB,
+  deleteProduct as deleteProductFromDB,
+  supabase 
+} from './database.js'
 
 let currentBarcode=null
 
-function generateBarcode(){
-  return Math.random().toString(36).substring(2,10).toUpperCase()
-}
-
-function generateBarcodeWithVendorInfo(){
-  const currentBatch = sessionStorage.getItem('currentBatch');
-  if (currentBatch) {
-    const batchData = JSON.parse(currentBatch);
-    const randomCode = Math.random().toString(36).substring(2,10).toUpperCase();
-    return `${randomCode}-${batchData.vendorName.substring(0,3).toUpperCase()}-${batchData.invoiceNumber}`;
-  }
-  return generateBarcode();
-}
+// Barcode generation is now handled by database.js
 
 function getCurrentBatchInfo(){
   const currentBatch = sessionStorage.getItem('currentBatch');
   return currentBatch ? JSON.parse(currentBatch) : null;
 }
 
-function extractBatchIdFromBarcode(barcode) {
-  if (!barcode) return null;
-  // Check if we have batch tracking data (try localStorage first, then sessionStorage)
-  let batchTracking = localStorage.getItem('batchTracking');
-  if (!batchTracking) {
-    batchTracking = sessionStorage.getItem('batchTracking');
-  }
-  if (batchTracking) {
-    const tracking = JSON.parse(batchTracking);
-    return tracking[barcode]?.batchId || null;
-  }
-  return null;
-}
-
-function extractVendorFromBarcode(barcode) {
-  if (!barcode) return null;
-  // First try to get from batch tracking data (try localStorage first, then sessionStorage)
-  let batchTracking = localStorage.getItem('batchTracking');
-  if (!batchTracking) {
-    batchTracking = sessionStorage.getItem('batchTracking');
-  }
-  if (batchTracking) {
-    const tracking = JSON.parse(batchTracking);
-    if (tracking[barcode]?.vendorName) {
-      return tracking[barcode].vendorName;
-    }
-  }
-  // Fallback to barcode format: RANDOMCODE-VENDOR-INVOICE
-  const parts = barcode.split('-');
-  if (parts.length >= 2) {
-    return parts[1];
-  }
-  return null;
-}
-
-function storeBatchTracking(barcode, batchInfo) {
-  // Store in both localStorage (persistent) and sessionStorage (current session)
-  const batchTracking = JSON.parse(localStorage.getItem('batchTracking') || sessionStorage.getItem('batchTracking') || '{}');
-  batchTracking[barcode] = {
-    batchId: batchInfo.batchId,
-    vendorName: batchInfo.vendorName,
-    invoiceNumber: batchInfo.invoiceNumber,
-    timestamp: new Date().toISOString()
-  };
-  localStorage.setItem('batchTracking', JSON.stringify(batchTracking));
-  sessionStorage.setItem('batchTracking', JSON.stringify(batchTracking));
-}
-
-function loadExistingBatchTracking() {
-  // Load batch tracking data from localStorage (persistent) and sync to sessionStorage
-  const batchTracking = localStorage.getItem('batchTracking');
-  if (batchTracking) {
-    sessionStorage.setItem('batchTracking', batchTracking);
-    console.log('Loaded existing batch tracking data:', Object.keys(JSON.parse(batchTracking)).length, 'products');
-  }
-}
+// Old localStorage batch tracking functions removed - now using database
 
 window.filterInventory=function(){
   const query=document.getElementById('searchInput').value.toLowerCase()
@@ -124,148 +61,114 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
     }
   }
 
-  try{
-    const {data:existing,error}=await supabase
-      .from('products')
-      .select('*')
-      .eq('name',name)
-      .eq('variant',variant)
-      .eq('brand',brand)
-      .eq('class_of_product',classOfProduct)
-
-    if(error) throw error
-
-    let barcode
-    if(existing.length>0){
-      const existingProduct=existing[0]
-
-      if(existingProduct.price===price){
-        barcode=existingProduct.barcode
-        const updateData = {
-          quantity: existingProduct.quantity + quantity,
-          qty_on_hold: (existingProduct.qty_on_hold||0) + quantity,
-          shelf_code: shelf,
-          expiry_date: expiryDate
-        };
-        
-        const {error:updateError}=await supabase
-          .from('products')
-          .update(updateData)
-          .eq('id', existingProduct.id)
-        if(updateError) throw updateError
-      }else{
-        barcode=generateBarcodeWithVendorInfo()
-        const insertData = {
-          name,variant,class_of_product:classOfProduct,brand,
-          quantity,
-          qty_on_hold:quantity,
-          qty_active:0,
-          price,expiry_date:expiryDate,shelf_code:shelf,
-          barcode,status:'on_hold',
-          date_added:new Date().toISOString().split('T')[0]
-        };
-        
-        const {error:insertError}=await supabase.from('products').insert([insertData])
-        if(insertError) throw insertError
-      }
-    }else{
-      barcode=generateBarcodeWithVendorInfo()
-      const insertData = {
-        name,variant,class_of_product:classOfProduct,brand,
-        quantity,
-        qty_on_hold:quantity,
-        qty_active:0,
-        price,expiry_date:expiryDate,shelf_code:shelf,
-        barcode,status:'on_hold',
-        date_added:new Date().toISOString().split('T')[0]
-      };
-      
-      const {error:insertError}=await supabase.from('products').insert([insertData])
-      if(insertError) throw insertError
-    }
-
-    // Store batch tracking information
-    if (batchInfo) {
-      storeBatchTracking(barcode, batchInfo);
-    }
-
-    renderBarcode(barcode)
-    alert(`"${name}" added/updated in inventory.`)
-    form.reset()
-    loadInventory()
-loadExistingBatchTracking()
-  }catch(err){
-    console.error("Insert error:",err)
-    let errorMessage = "Something went wrong while adding the product.";
-    
-    if (err.message) {
-      errorMessage += `\n\nError details: ${err.message}`;
+  try {
+    // Create batch in database if not exists
+    let batchData;
+    if (batchInfo.id) {
+      batchData = batchInfo;
+    } else {
+      batchData = await createBatch(batchInfo.vendorName, batchInfo.invoiceNumber);
+      // Update session storage with database ID
+      batchInfo.id = batchData.id;
+      sessionStorage.setItem('currentBatch', JSON.stringify(batchInfo));
     }
     
-    if (err.details) {
-      errorMessage += `\n\nDetails: ${err.details}`;
+    const productDetails = {
+      part_name: name,
+      variant: variant,
+      class: classOfProduct,
+      brand: brand,
+      price: price,
+      shelf_code: shelf,
+      min_stock: 20,
+      expiry_date: expiryDate
+    };
+    
+    // Find existing product
+    const existingProduct = await findProduct(productDetails);
+    
+    let product, barcode;
+    if (existingProduct && existingProduct.price === price) {
+      // Product exists with same price, use existing barcode
+      product = existingProduct;
+      barcode = existingProduct.barcode;
+    } else {
+      // Create new product with unique barcode
+      barcode = await generateUniqueBarcode();
+      product = await createProduct(productDetails, barcode);
     }
     
-    alert(errorMessage);
+    // Add inventory entry
+    await addInventory(product.id, batchData.id, quantity, expiryDate);
+    
+    renderBarcode(barcode);
+    alert(`"${name}" added/updated in inventory.`);
+    form.reset();
+    loadInventory();
+  } catch (err) {
+    console.error("Insert error:", err);
+    alert("Something went wrong while adding the product: " + err.message);
   }
 })
 
 async function loadInventory(){
-  const {data,error}=await supabase.from('products').select('*')
-  if(error){
-    console.error("Error loading inventory:",error)
-    return
+  try {
+    const data = await loadInventoryFromDB();
+    
+    const tbody = document.querySelector('#inventoryTable tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(product => {
+      const totalPrice = (product.total_quantity * product.price).toFixed(2);
+      const formattedDate = product.created_at
+        ? new Date(product.created_at).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
+        : '-';
+      const minStock = product.min_stock || 20;
+      const quantityColor = product.total_quantity < minStock ? 'red' : 'black';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product.part_name}</td>
+        <td>${product.variant}</td>
+        <td>${product.class || '-'}</td>
+        <td>${product.brand}</td>
+        <td style="color:${quantityColor}">${product.total_quantity}</td>
+        <td>${product.total_on_hold}</td>
+        <td>${product.total_active}</td>
+        <td>${product.price}</td>
+        <td>${totalPrice}</td>
+        <td>${product.shelf_code || '-'}</td>
+        <td>${product.batch_count} batches</td>
+        <td>${formattedDate}</td>
+        <td>
+          <button onclick="editProduct('${product.id}')">Edit</button>
+          <button onclick="deleteProduct('${product.id}')">Delete</button>
+          <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Error loading inventory:", error);
+    alert("Failed to load inventory: " + error.message);
   }
-
-  const tbody=document.querySelector('#inventoryTable tbody')
-  tbody.innerHTML=''
-
-  data.forEach(product=>{
-    const totalPrice=(product.quantity*product.price).toFixed(2)
-    const formattedDate=product.date_added
-      ?new Date(product.date_added).toLocaleString('en-IN',{
-        timeZone:'Asia/Kolkata',
-        year:'numeric',month:'short',day:'numeric'
-      })
-      :'-'
-    const minStock=product.min_stock||20
-    const quantityColor=product.quantity<minStock?'red':'black'
-
-    const row=document.createElement('tr')
-    row.innerHTML=`
-      <td>${product.name}</td>
-      <td>${product.variant}</td>
-      <td>${product.class_of_product||'-'}</td>
-      <td>${product.brand}</td>
-      <td style="color:${quantityColor}">${product.quantity}</td>
-      <td>${product.qty_on_hold||0}</td>
-      <td>${product.qty_active||0}</td>
-      <td>${product.price}</td>
-      <td>${totalPrice}</td>
-      <td>${product.shelf_code||'-'}</td>
-      <td>${extractBatchIdFromBarcode(product.barcode)||'-'}</td>
-      <td>${extractVendorFromBarcode(product.barcode)||'-'}</td>
-      <td>${formattedDate}</td>
-      <td>
-        <button onclick="editProduct('${product.id}')">Edit</button>
-        <button onclick="deleteProduct('${product.id}')">Delete</button>
-        <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
-      </td>
-    `
-    tbody.appendChild(row)
-  })
 }
 
-window.deleteProduct=async function(id){
-  if(!confirm("Are you sure you want to delete this part?")) return
-  const {error}=await supabase.from('products').delete().eq('id',id)
-  if(error){
-    console.error("Delete error:",error)
-    alert("Failed to delete part.")
-  }else{
-    alert("Part removed.")
-    loadInventory()
-loadExistingBatchTracking()
+window.deleteProduct = async function(id) {
+  if (!confirm("Are you sure you want to delete this part?")) return;
+  
+  try {
+    await deleteProductFromDB(id);
+    alert("Part removed.");
+    loadInventory();
+  } catch (error) {
+    console.error("Delete error:", error);
+    alert("Failed to delete part: " + error.message);
   }
 }
 
@@ -286,34 +189,37 @@ async function renderBarcode(barcode){
   document.getElementById("downloadBarcode").style.display="inline-block"
   document.getElementById("printBarcode").style.display="inline-block"
 
-  const {data,error}=await supabase.from('products').select('*').eq('barcode',barcode).single()
-  if(error){
-    console.error("Error fetching product details:",error)
-    document.getElementById("productDetails").innerHTML="<p>Unable to load product details.</p>"
-    return
-  }
-  const formattedDate=data.date_added
-    ?new Date(data.date_added).toLocaleString('en-IN',{
-      timeZone:'Asia/Kolkata',
-      year:'numeric',month:'short',day:'numeric'
-    })
-    :'-'
+  try {
+    const { data, error } = await supabase.from('products').select('*').eq('barcode', barcode).single();
+    if (error) {
+      console.error("Error fetching product details:", error);
+      document.getElementById("productDetails").innerHTML = "<p>Unable to load product details.</p>";
+      return;
+    }
+    
+    const formattedDate = data.created_at
+      ? new Date(data.created_at).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      : '-';
 
-  document.getElementById("productDetails").innerHTML=`
-    <h3>Product Details</h3>
-    <p><strong>Name:</strong> ${data.name}</p>
-    <p><strong>Variant:</strong> ${data.variant||'-'}</p>
-    <p><strong>Class:</strong> ${data.class_of_product||'-'}</p>
-    <p><strong>Brand:</strong> ${data.brand}</p>
-    <p><strong>Total Qty:</strong> ${data.quantity}</p>
-    <p><strong>On-Hold Qty:</strong> ${data.qty_on_hold||0}</p>
-    <p><strong>Active Qty:</strong> ${data.qty_active||0}</p>
-    <p><strong>Price:</strong> ₹${data.price}</p>
-    <p><strong>Total Value:</strong> ₹${(data.quantity*data.price).toFixed(2)}</p>
-    <p><strong>Shelf:</strong> ${data.shelf_code||'-'}</p>
-    <p><strong>Expiry:</strong> ${data.expiry_date||'-'}</p>
-    <p><strong>Date Added:</strong> ${formattedDate}</p>
-  `
+    document.getElementById("productDetails").innerHTML = `
+      <h3>Product Details</h3>
+      <p><strong>Name:</strong> ${data.part_name}</p>
+      <p><strong>Variant:</strong> ${data.variant || '-'}</p>
+      <p><strong>Class:</strong> ${data.class || '-'}</p>
+      <p><strong>Brand:</strong> ${data.brand}</p>
+      <p><strong>Price:</strong> ₹${data.price}</p>
+      <p><strong>Shelf:</strong> ${data.shelf_code || '-'}</p>
+      <p><strong>Date Added:</strong> ${formattedDate}</p>
+    `;
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    document.getElementById("productDetails").innerHTML = "<p>Unable to load product details.</p>";
+  }
 }
 window.renderBarcode=renderBarcode
 
@@ -383,36 +289,39 @@ nameInput.addEventListener('input',async()=>{
   suggestions.innerHTML=''
   if(query.length<1) return
 
-  const {data,error}=await supabase
-    .from('products')
-    .select('*')
-    .or(`name.ilike.%${query}%,variant.ilike.%${query}%`)
-    .limit(5)
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(`part_name.ilike.%${query}%,variant.ilike.%${query}%`)
+      .limit(5);
 
-  if(error){
-    console.error("Suggestion error:",error)
-    return
+    if (error) {
+      console.error("Suggestion error:", error);
+      return;
+    }
+
+    data.forEach(product => {
+      const li = document.createElement('li');
+      li.textContent = `${product.part_name} (${product.variant || ''})`;
+      li.style.padding = '5px';
+      li.style.cursor = 'pointer';
+      li.addEventListener('click', () => {
+        nameInput.value = product.part_name;
+        document.getElementById('variant').value = product.variant || '';
+        document.getElementById('class_of_product').value = product.class?.trim() || '';
+        document.getElementById('brand').value = product.brand || '';
+        document.getElementById('quantity').value = 0;
+        document.getElementById('price').value = product.price || 0;
+        document.getElementById('shelf').value = product.shelf_code || '';
+        document.getElementById('expiry').value = '';
+        suggestions.innerHTML = '';
+      });
+      suggestions.appendChild(li);
+    });
+  } catch (error) {
+    console.error("Suggestion error:", error);
   }
-
-  data.forEach(product=>{
-    const li=document.createElement('li')
-    li.textContent=`${product.name} (${product.variant||''})`
-    li.style.padding='5px'
-    li.style.cursor='pointer'
-    li.addEventListener('click',()=>{
-      nameInput.value=product.name
-      document.getElementById('variant').value=product.variant||''
-      document.getElementById('class_of_product').value=product.class_of_product?.trim()||''
-      document.getElementById('brand').value=product.brand||''
-      document.getElementById('quantity').value=product.quantity||0
-      document.getElementById('price').value=product.price||0
-      document.getElementById('shelf').value=product.shelf_code||''
-      document.getElementById('expiry').value=product.expiry_date||''
-      suggestions.innerHTML=''
-    })
-    suggestions.appendChild(li)
-  })
 })
 
 loadInventory()
-loadExistingBatchTracking()
