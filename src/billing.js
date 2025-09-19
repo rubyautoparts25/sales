@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabase=createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
-)
+import { supabase, sellInventory } from './database.js'
 
 let cart=[]
 let customer={}
@@ -35,7 +30,7 @@ document.getElementById('productSearch').addEventListener('input',e=>{
 
 async function searchProducts(query){
   try{
-    const{data,error}=await supabase.from('products').select('*').ilike('name',`%${query}%`).gt('qty_active',0).limit(5)
+    const{data,error}=await supabase.from('active_inventory').select('*').ilike('part_name',`%${query}%`).gt('total_active',0).limit(5)
     if(error){
       console.error("Search error:",error)
       return
@@ -80,7 +75,7 @@ function showSearchResults(products){
     item.style.cursor='pointer'
     item.style.borderBottom='1px solid #eee'
     item.style.fontSize='14px'
-    item.textContent=`${product.name} - ₹${product.price} (${product.qty_active} available)`
+    item.textContent=`${product.part_name} - ₹${product.price} (${product.total_active} available)`
     item.addEventListener('mouseenter',()=>{
       item.style.backgroundColor='#f5f5f5'
     })
@@ -112,32 +107,32 @@ function showSearchResults(products){
 }
 
 function addProductToCart(product){
-  if(product.qty_active<=0){alert("No active stock available");return}
+  if(product.total_active<=0){alert("No active stock available");return}
   const discountInput=parseFloat(document.getElementById('discountInput').value)||0
   const finalPrice=product.price-(product.price*discountInput/100)
   const existingIndex=cart.findIndex(item=>item.id===product.id)
   if(existingIndex!==-1){
-    if(cart[existingIndex].qty+1>product.qty_active){alert("Not enough active stock");return}
+    if(cart[existingIndex].qty+1>product.total_active){alert("Not enough active stock");return}
     cart[existingIndex].qty+=1
   }else{
-    cart.push({id:product.id,name:product.name,price:product.price,discount:discountInput,finalPrice,qty:1,active:product.qty_active})
+    cart.push({id:product.id,name:product.part_name,price:product.price,discount:discountInput,finalPrice,qty:1,active:product.total_active})
   }
   renderCart()
 }
 
 async function addScannedItem(code){
   try{
-    const{data,error}=await supabase.from('products').select('*').eq('barcode',code).single()
-    if(error||!data){alert("Product not found");return}
-    if(data.qty_active<=0){alert("No active stock available");return}
+    const{data,error}=await supabase.from('active_inventory').select('*').eq('barcode',code).single()
+    if(error||!data){alert("Product not found or no active stock");return}
+    if(data.total_active<=0){alert("No active stock available");return}
     const discountInput=parseFloat(document.getElementById('discountInput').value)||0
     const finalPrice=data.price-(data.price*discountInput/100)
     const existingIndex=cart.findIndex(item=>item.id===data.id)
     if(existingIndex!==-1){
-      if(cart[existingIndex].qty+1>data.qty_active){alert("Not enough active stock");return}
+      if(cart[existingIndex].qty+1>data.total_active){alert("Not enough active stock");return}
       cart[existingIndex].qty+=1
     }else{
-      cart.push({id:data.id,name:data.name,price:data.price,discount:discountInput,finalPrice,qty:1,active:data.qty_active})
+      cart.push({id:data.id,name:data.part_name,price:data.price,discount:discountInput,finalPrice,qty:1,active:data.total_active})
     }
     renderCart()
   }catch(err){
@@ -199,7 +194,9 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
       total_amount:total
     }]).select().single()
     if(billErr)throw billErr
+    
     for(const item of cart){
+      // Create sale record
       const{error:saleError}=await supabase.from("sales").insert({
         product_id:item.id,
         quantity_sold:item.qty,
@@ -207,15 +204,15 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
         price_at_sale:item.price
       })
       if(saleError)console.error("Sale insert error:",saleError)
-      const{data:product,error:fetchError}=await supabase.from('products').select('*').eq('id',item.id).single()
-      if(!fetchError){
-        if(item.qty>product.qty_active){alert("Not enough active stock for "+product.name);continue}
-        const newActive=product.qty_active-item.qty
-        const newQty=product.quantity-item.qty
-        const{error:updateError}=await supabase.from('products').update({quantity:newQty,qty_active:newActive}).eq('id',item.id)
-        if(updateError)console.error("Stock update error:",updateError)
-      }
+      
+      // Use the database function to sell inventory (FIFO)
+      const{error:sellError}=await supabase.rpc('sell_inventory', {
+        product_id: item.id,
+        quantity_to_sell: item.qty
+      })
+      if(sellError)console.error("Sell inventory error:",sellError)
     }
+    
     window.latestBill={...bill,items:[...cart],customer:{...customer}}
     alert("Bill finalized. ID: "+bill.id)
     cart=[]

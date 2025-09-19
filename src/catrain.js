@@ -1,8 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
-const supabaseUrl="https://yrilfazkyhqwdqkgzcbb.supabase.co";
-const supabaseKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60"; 
-const supabase=createClient(supabaseUrl,supabaseKey);
+import { supabase } from './database.js';
 const SECRET_PASSWORD="Pl@ySt@tion123"; 
 
 const loginDiv=document.getElementById("login");

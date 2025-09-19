@@ -1,11 +1,6 @@
 import './style.css'
-import { createClient } from '@supabase/supabase-js'
 import JsBarcode from 'jsbarcode'
-
-const supabase=createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
-)
+import { supabase, deleteProduct as deleteProductFromDB } from './database.js'
 
 let currentBarcode=null
 
@@ -78,57 +73,64 @@ document.getElementById('printBarcode').addEventListener('click',()=>{
 })
 
 async function loadInventory(){
-  const {data,error}=await supabase.from('products').select('*').gt('qty_on_hold', 0)
-  if(error){
-    console.error("Error loading inventory:",error)
-    return
+  try {
+    const { data, error } = await supabase.from('onhold_inventory').select('*');
+    if (error) {
+      console.error("Error loading inventory:", error);
+      return;
+    }
+
+    const tbody = document.querySelector('#inventoryTable tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(product => {
+      const totalPrice = (product.total_on_hold * product.price).toFixed(2);
+      const formattedDate = product.created_at
+        ? new Date(product.created_at).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
+        : '-';
+      const minStock = product.min_stock || 20;
+      const quantityColor = product.total_on_hold < minStock ? 'red' : 'black';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product.part_name}</td>
+        <td>${product.variant}</td>
+        <td>${product.class || '-'}</td>
+        <td>${product.brand}</td>
+        <td style="color:${quantityColor}">${product.total_on_hold}</td>
+        <td>${product.price}</td>
+        <td>${totalPrice}</td>
+        <td>${product.shelf_code || '-'}</td>
+        <td>${formattedDate}</td>
+        <td>
+          <button onclick="editProduct('${product.id}')">Edit</button>
+          <button onclick="deleteProduct('${product.id}')">Delete</button>
+          <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Error loading inventory:", error);
+    alert("Failed to load inventory: " + error.message);
   }
-
-  const tbody=document.querySelector('#inventoryTable tbody')
-  tbody.innerHTML=''
-
-  data.forEach(product=>{
-    const totalPrice=(product.qty_on_hold*product.price).toFixed(2)
-    const formattedDate=product.date_added
-      ?new Date(product.date_added).toLocaleString('en-IN',{
-        timeZone:'Asia/Kolkata',
-        year:'numeric',month:'short',day:'numeric'
-      })
-      :'-'
-    const minStock=product.min_stock||20
-    const quantityColor=product.qty_on_hold<minStock?'red':'black'
-
-    const row=document.createElement('tr')
-    row.innerHTML=`
-      <td>${product.name}</td>
-      <td>${product.variant}</td>
-      <td>${product.class_of_product||'-'}</td>
-      <td>${product.brand}</td>
-      <td style="color:${quantityColor}">${product.qty_on_hold}</td>
-      <td>${product.price}</td>
-      <td>${totalPrice}</td>
-      <td>${product.shelf_code||'-'}</td>
-      <td>${formattedDate}</td>
-      <td>
-        <button onclick="editProduct('${product.id}')">Edit</button>
-        <button onclick="deleteProduct('${product.id}')">Delete</button>
-        <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
-      </td>
-    `
-    tbody.appendChild(row)
-  })
 }
 
-window.deleteProduct=async function(id){
-  if(!confirm('Are you sure you want to delete this product?')) return
+window.deleteProduct = async function(id) {
+  if (!confirm('Are you sure you want to delete this product?')) return;
   
-  const {error}=await supabase.from('products').delete().eq('id',id)
-  if(error){
-    console.error("Error deleting product:",error)
-    alert("Failed to delete product.")
-  }else{
-    alert("Product deleted successfully.")
-    loadInventory()
+  try {
+    await deleteProductFromDB(id);
+    alert("Product deleted successfully.");
+    loadInventory();
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    alert("Failed to delete product: " + error.message);
   }
 }
 

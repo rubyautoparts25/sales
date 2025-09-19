@@ -1,31 +1,40 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  'https://yrilfazkyhqwdqkgzcbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyaWxmYXpreWhxd2Rxa2d6Y2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MzczMTYsImV4cCI6MjA3MzUxMzMxNn0._ayJaSCilAzfOmqcczBYv6_ghYbHevW89u09_2c9b60'
-);
+import { supabase, activateInventory } from './database.js';
 
 let currentProduct = null;
 
 async function fetchProductByBarcode(barcode) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('barcode', barcode)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        inventory!inner(
+          qty_on_hold,
+          qty_active
+        )
+      `)
+      .eq('barcode', barcode)
+      .single();
 
-  if (error || !data) {
-    showResult('Product not found with this barcode.', 'error');
+    if (error || !data) {
+      showResult('Product not found with this barcode.', 'error');
+      return null;
+    }
+
+    // Calculate total on-hold quantity from inventory
+    const totalOnHold = data.inventory.reduce((sum, inv) => sum + (inv.qty_on_hold || 0), 0);
+    
+    if (totalOnHold <= 0) {
+      showResult('This product has no quantity on hold to activate.', 'error');
+      return null;
+    }
+
+    return { ...data, total_on_hold: totalOnHold };
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    showResult('Error fetching product details.', 'error');
     return null;
   }
-
-  // Check if product has on-hold quantity
-  if (!data.qty_on_hold || data.qty_on_hold <= 0) {
-    showResult('This product has no quantity on hold to activate.', 'error');
-    return null;
-  }
-
-  return data;
 }
 
 function displayProductDetails(product) {
@@ -34,15 +43,13 @@ function displayProductDetails(product) {
   const productInfo = document.getElementById('productInfo');
   productInfo.innerHTML = `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-      <div><strong>Name:</strong> ${product.name}</div>
+      <div><strong>Name:</strong> ${product.part_name}</div>
       <div><strong>Variant:</strong> ${product.variant}</div>
       <div><strong>Brand:</strong> ${product.brand}</div>
-      <div><strong>Class:</strong> ${product.class_of_product || '-'}</div>
+      <div><strong>Class:</strong> ${product.class || '-'}</div>
       <div><strong>Price:</strong> ₹${product.price}</div>
       <div><strong>Shelf Code:</strong> ${product.shelf_code || '-'}</div>
-      <div><strong>Total Quantity:</strong> ${product.quantity}</div>
-      <div><strong>On Hold:</strong> ${product.qty_on_hold}</div>
-      <div><strong>Active:</strong> ${product.qty_active || 0}</div>
+      <div><strong>On Hold:</strong> ${product.total_on_hold}</div>
       <div><strong>Barcode:</strong> ${product.barcode}</div>
     </div>
   `;
@@ -51,9 +58,9 @@ function displayProductDetails(product) {
   const activateQuantityInput = document.getElementById('activateQuantity');
   const maxQuantityInfo = document.getElementById('maxQuantityInfo');
   
-  activateQuantityInput.max = product.qty_on_hold;
+  activateQuantityInput.max = product.total_on_hold;
   activateQuantityInput.value = 1;
-  maxQuantityInfo.textContent = `Maximum available on hold: ${product.qty_on_hold}`;
+  maxQuantityInfo.textContent = `Maximum available on hold: ${product.total_on_hold}`;
 
   // Show product details section
   document.getElementById('productDetails').style.display = 'block';
@@ -65,7 +72,7 @@ async function activateProductQuantity(quantityToActivate) {
     return;
   }
 
-  if (quantityToActivate > currentProduct.qty_on_hold) {
+  if (quantityToActivate > currentProduct.total_on_hold) {
     showResult('Cannot activate more quantity than available on hold.', 'error');
     return;
   }
@@ -76,26 +83,19 @@ async function activateProductQuantity(quantityToActivate) {
   }
 
   try {
-    const newQtyOnHold = currentProduct.qty_on_hold - quantityToActivate;
-    const newQtyActive = (currentProduct.qty_active || 0) + quantityToActivate;
-    
-    // Update the product quantities
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ 
-        qty_on_hold: newQtyOnHold,
-        qty_active: newQtyActive,
-        activated_at: new Date().toISOString()
-      })
-      .eq('id', currentProduct.id);
+    // Use the database function to activate inventory
+    const { data, error } = await supabase.rpc('activate_inventory', {
+      product_id: currentProduct.id,
+      quantity_to_activate: quantityToActivate
+    });
 
-    if (updateError) {
-      console.error(updateError);
+    if (error) {
+      console.error('Activation error:', error);
       showResult('Activation failed. Please try again.', 'error');
       return;
     }
 
-    showResult(`Successfully activated ${quantityToActivate} units of "${currentProduct.name}".`, 'success');
+    showResult(`Successfully activated ${quantityToActivate} units of "${currentProduct.part_name}".`, 'success');
     
     // Hide product details and reset form
     document.getElementById('productDetails').style.display = 'none';
