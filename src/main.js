@@ -240,11 +240,23 @@ window.viewBarcode = async function(barcode) {
       <div style="text-align: center; margin-top: 15px;">
         <button onclick="downloadModalBarcode('${barcode}')" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Download</button>
         <button onclick="printModalBarcode('${barcode}')" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Print</button>
-        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        <button id="closeBarcodeModalBtn" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
       </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listener for close button
+    document.getElementById('closeBarcodeModalBtn').addEventListener('click', function() {
+      modal.remove();
+    });
+    
+    // Add click-outside-to-close functionality
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
     
     // Generate barcode in the modal
     JsBarcode("#modalBarcode", barcode, {
@@ -380,11 +392,23 @@ window.showProductBarcodes = async function(productId) {
       <h3>Product Barcodes</h3>
       <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${barcodeList}</pre>
       <div style="text-align: center; margin-top: 15px;">
-        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        <button id="closeProductBarcodesModalBtn" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
       </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listener for close button
+    document.getElementById('closeProductBarcodesModalBtn').addEventListener('click', function() {
+      modal.remove();
+    });
+    
+    // Add click-outside-to-close functionality
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
     
   } catch (error) {
     console.error('Error fetching barcodes:', error);
@@ -403,39 +427,10 @@ async function renderBarcode(barcode){
   })
   currentBarcode=barcode
   document.getElementById("downloadBarcode").style.display="inline-block"
-  document.getElementById("printBarcode").style.display="inline-block"
+  // Print functionality moved to modal system
 
-  try {
-    const { data, error } = await supabase.from('products').select('*').eq('barcode', barcode).single();
-    if (error) {
-      console.error("Error fetching product details:", error);
-      document.getElementById("productDetails").innerHTML = "<p>Unable to load product details.</p>";
-      return;
-    }
-    
-    const formattedDate = data.created_at
-      ? new Date(data.created_at).toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
-      : '-';
-
-    document.getElementById("productDetails").innerHTML = `
-    <h3>Product Details</h3>
-      <p><strong>Name:</strong> ${data.part_name}</p>
-      <p><strong>Variant:</strong> ${data.variant || '-'}</p>
-      <p><strong>Class:</strong> ${data.class || '-'}</p>
-    <p><strong>Brand:</strong> ${data.brand}</p>
-    <p><strong>Price:</strong> ₹${data.price}</p>
-      <p><strong>Shelf:</strong> ${data.shelf_code || '-'}</p>
-    <p><strong>Date Added:</strong> ${formattedDate}</p>
-    `;
-  } catch (error) {
-    console.error("Error fetching product details:", error);
-    document.getElementById("productDetails").innerHTML = "<p>Unable to load product details.</p>";
-  }
+  // Product details are now displayed in the modal when viewing barcodes
+  // No need to display inline product details anymore
 }
 window.renderBarcode=renderBarcode
 
@@ -452,41 +447,7 @@ document.getElementById('downloadBarcode').addEventListener('click',()=>{
   URL.revokeObjectURL(url)
 })
 
-document.getElementById('printBarcode').addEventListener('click', async () => {
-  if (!currentBarcode) return alert("No barcode to print.");
-
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('barcode', currentBarcode)
-    .single();
-
-  if (error) {
-    console.error("Error fetching product for print:", error);
-    return alert("Failed to fetch product details.");
-  }
-  const d = new Date(data.date_added);
-  const yy = String(d.getFullYear()).slice(-2);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const dateCode = `${yy}${mm}${dd}`;
-  const printContent = `
-    <div style="text-align:center;font-family:Arial,sans-serif;font-size:12px;">
-      ${document.getElementById('barcode').outerHTML}
-      <div style="margin-top:2px;font-size:15px;">${data.price}</div>
-      <div style="margin-top:2px;font-size:15px;">${data.name}</div>
-      <div style="margin-top:2px;font-size:12px;">${dateCode}</div>
-    </div>
-  `;
-
-  const printWindow = window.open('', '', 'width=200,height=150');
-  printWindow.document.write('<html><head><title>Print Barcode</title></head><body>');
-  printWindow.document.write(printContent);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-});
+// Print functionality removed - users can print from the modal system;
 
 const nameInput=document.getElementById('name')
 const suggestions=document.createElement('ul')

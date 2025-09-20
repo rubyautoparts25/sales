@@ -2,6 +2,17 @@ import { supabase, activateInventory } from './database.js';
 
 let currentProduct = null;
 
+// Check for barcode parameter in URL on page load
+window.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const barcodeParam = urlParams.get('barcode');
+  
+  if (barcodeParam) {
+    document.getElementById('barcode').value = barcodeParam;
+    fetchProductByBarcode(barcodeParam);
+  }
+});
+
 async function fetchProductByBarcode(barcode) {
   try {
     // First try to get from onhold_inventory view
@@ -73,8 +84,7 @@ function displayProductDetails(product) {
   activateQuantityInput.value = 1;
   maxQuantityInfo.textContent = `Maximum available on hold: ${product.total_on_hold}`;
 
-  // Show product details section
-  document.getElementById('productDetails').style.display = 'block';
+  // Product details are now shown in the modal system
 }
 
 async function activateProductQuantity(quantityToActivate) {
@@ -109,7 +119,7 @@ async function activateProductQuantity(quantityToActivate) {
     showResult(`Successfully activated ${quantityToActivate} units of "${currentProduct.part_name}".`, 'success');
     
     // Hide product details and reset form
-    document.getElementById('productDetails').style.display = 'none';
+    // Product details modal is handled elsewhere
     document.getElementById('activateForm').reset();
     currentProduct = null;
     
@@ -132,7 +142,7 @@ function showResult(message, type) {
 }
 
 function hideProductDetails() {
-  document.getElementById('productDetails').style.display = 'none';
+  // Product details modal is handled elsewhere
   document.getElementById('activateForm').reset();
   currentProduct = null;
 }

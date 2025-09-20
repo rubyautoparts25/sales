@@ -46,30 +46,7 @@ document.getElementById('downloadBarcode').addEventListener('click',()=>{
   img.src='data:image/svg+xml;base64,'+btoa(svgData)
 })
 
-document.getElementById('printBarcode').addEventListener('click',()=>{
-  if(!currentBarcode) return
-  const printWindow=window.open('','_blank')
-  printWindow.document.write(`
-    <html>
-      <head><title>Barcode - ${currentBarcode}</title></head>
-      <body style="text-align:center;padding:20px;">
-        <h2>Product Barcode</h2>
-        <div id="barcode"></div>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script>
-          JsBarcode("#barcode", "${currentBarcode}", {
-            format: "CODE128",
-            width: 2,
-            height: 100,
-            displayValue: true
-          });
-          window.print();
-        </script>
-      </body>
-    </html>
-  `)
-  printWindow.document.close()
-})
+// Print functionality removed - users can print from the modal system
 
 async function loadInventory(){
   try {
