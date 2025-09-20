@@ -244,8 +244,8 @@ document.getElementById('printBill').addEventListener('click',async()=>{
       <p style="text-align:center;margin-top:0;">Purchase Bill</p>
       <hr>
       <p><strong>Date & Time:</strong> ${now}</p>
-      <p><strong>Customer:</strong> ${bill.customer.name} (${bill.customer.phone||"-"})</p>
-      <p><strong>Bill ID:</strong> ${bill.id}</p>
+      <p><strong>Customer:</strong> ${tempBill.customer.name} (${tempBill.customer.phone||"-"})</p>
+      <p><strong>Bill ID:</strong> ${tempBill.id}</p>
       <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
         <thead>
           <tr>
@@ -257,7 +257,7 @@ document.getElementById('printBill').addEventListener('click',async()=>{
         </thead>
         <tbody>
   `
-  bill.items.forEach(it=>{
+  tempBill.items.forEach(it=>{
     html+=`
       <tr>
         <td style="border:1px solid #ccc;padding:0.5rem;">${it.name}</td>
@@ -270,7 +270,7 @@ document.getElementById('printBill').addEventListener('click',async()=>{
   html+=`
         </tbody>
       </table>
-      <h3 style="text-align:right;margin-top:1rem;">Grand Total: ₹${bill.total_amount}</h3>
+      <h3 style="text-align:right;margin-top:1rem;">Grand Total: ₹${tempBill.total_amount}</h3>
       <hr>
       <p style="text-align:center;">Thank you for your purchase</p>
     </div>
