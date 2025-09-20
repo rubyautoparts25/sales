@@ -116,14 +116,14 @@ window.activateInventoryItem = async function(barcode) {
 
 
 // Delete inventory item function
-window.deleteInventoryItem = async function(inventoryId) {
+window.deleteInventoryItem = async function(barcode) {
   if (!confirm('Are you sure you want to delete this inventory item?')) return;
   
   try {
     const { error } = await supabase
       .from('inventory')
       .delete()
-      .eq('id', inventoryId);
+      .eq('barcode', barcode);
     
     if (error) throw error;
     
@@ -261,7 +261,7 @@ async function loadInventory(){
         <td>${formattedDate}</td>
         <td>
           <button onclick="activateInventoryItem('${item.barcode}')">Activate</button>
-          <button onclick="deleteInventoryItem('${item.id}')">Delete</button>
+          <button onclick="deleteInventoryItem('${item.barcode}')">Delete</button>
           <button onclick="viewBarcode('${item.barcode}')">View Barcode</button>
         </td>
       `;
