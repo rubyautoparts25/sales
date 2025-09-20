@@ -4,7 +4,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseConfig } from '../supabase.config.js'
 
-// Initialize Supabase client with hardcoded configuration
+// Initialize Supabase client with environment variable configuration
 const config = getSupabaseConfig()
 const supabase = createClient(config.url, config.anonKey)
 
