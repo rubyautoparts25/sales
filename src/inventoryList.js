@@ -75,23 +75,23 @@ function displayInventory(inventory) {
       <tbody>
         ${inventory.map(item => `
           <tr>
-            <td><code>${item.barcode}</code></td>
-            <td><code>${item.batch_id}</code></td>
-            <td>${item.vendor_name || '-'}</td>
-            <td>${item.batch_date ? new Date(item.batch_date).toLocaleDateString() : '-'}</td>
-            <td>${new Date(item.created_at).toLocaleDateString()}</td>
-            <td><strong>${item.part_name}</strong></td>
-            <td>${item.variant || '-'}</td>
-            <td><span class="badge">${item.class}</span></td>
-            <td>${item.brand}</td>
-            <td>₹${item.price.toFixed(2)}</td>
-            <td><span style="color: #f39c12;">${item.quantity_on_hold}</span></td>
-            <td><span style="color: #27ae60;">${item.quantity_active}</span></td>
-            <td><strong>${item.quantity_on_hold + item.quantity_active}</strong></td>
+            <td><code style="font-size: 0.8rem;">${item.barcode}</code></td>
+            <td><code style="font-size: 0.8rem;">${item.batch_id}</code></td>
+            <td style="font-size: 0.8rem;">${item.vendor_name || '-'}</td>
+            <td style="font-size: 0.8rem;">${item.batch_date ? new Date(item.batch_date).toLocaleDateString() : '-'}</td>
+            <td style="font-size: 0.8rem;">${new Date(item.created_at).toLocaleDateString()}</td>
+            <td><strong style="font-size: 0.85rem;">${item.part_name}</strong></td>
+            <td style="font-size: 0.8rem;">${item.variant || '-'}</td>
+            <td><span style="background: #e9ecef; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.75rem;">${item.class}</span></td>
+            <td style="font-size: 0.8rem;">${item.brand}</td>
+            <td style="font-size: 0.8rem;">₹${item.price.toFixed(2)}</td>
+            <td><span style="color: #f39c12; font-size: 0.8rem;">${item.quantity_on_hold}</span></td>
+            <td><span style="color: #27ae60; font-size: 0.8rem;">${item.quantity_active}</span></td>
+            <td><strong style="font-size: 0.8rem;">${item.quantity_on_hold + item.quantity_active}</strong></td>
             <td>
-              <button class="btn btn-info" onclick="viewBarcode('${item.barcode}')">View Barcode</button>
+              <button class="btn btn-info" onclick="viewBarcode('${item.barcode}')">View</button>
               <button class="btn btn-warning" onclick="editInventoryItem('${item.barcode}')">Edit</button>
-              <button class="btn btn-danger" onclick="deleteInventoryItem('${item.barcode}')">Delete</button>
+              <button class="btn btn-danger" onclick="deleteInventoryItem('${item.barcode}')">Del</button>
             </td>
           </tr>
         `).join('')}
