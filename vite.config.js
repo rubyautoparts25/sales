@@ -13,7 +13,8 @@ export default defineConfig({
         edit: 'edit.html',
         metrics: './metrics.html',
         activate: 'activate.html',
-        batch: 'batch.html'
+        batch: 'batch.html',
+        'add-product': 'add-product.html'
       }
     }
   }
