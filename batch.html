@@ -417,9 +417,9 @@
       }
 
       try {
-        // Search for products with matching barcode
+        // Search for inventory items with matching barcode
         const { data, error } = await supabaseClient
-          .from('products')
+          .from('batch_details')
           .select('*')
           .eq('barcode', query)
           .limit(10);
@@ -447,26 +447,28 @@
           `;
           resultsDiv.appendChild(summaryDiv);
           
-          data.forEach(product => {
-            // Try localStorage first (persistent), then sessionStorage
+          data.forEach(item => {
+            // Get vendor info from batch_details data
+            let vendorInfo = item.vendor_name || '';
+            let batchInfo = item.batch_number || '';
+            
+            // Try localStorage first (persistent), then sessionStorage for additional tracking
             let batchTracking = localStorage.getItem('batchTracking');
             if (!batchTracking) {
               batchTracking = sessionStorage.getItem('batchTracking');
             }
-            let vendorInfo = '';
-            let batchInfo = '';
             
             if (batchTracking) {
               const tracking = JSON.parse(batchTracking);
-              const trackingData = tracking[product.barcode];
+              const trackingData = tracking[item.barcode];
               if (trackingData) {
-                vendorInfo = trackingData.vendorName;
-                batchInfo = trackingData.batchId;
+                vendorInfo = trackingData.vendorName || vendorInfo;
+                batchInfo = trackingData.batchId || batchInfo;
               }
             }
             
             if (!vendorInfo) {
-              vendorInfo = extractVendorFromBarcode(product.barcode);
+              vendorInfo = extractVendorFromBarcode(item.barcode);
             }
             
             // Try to get more detailed vendor info from current batch
@@ -478,11 +480,11 @@
 
             // Format the date properly
             let formattedDate = 'Unknown';
-            console.log('Product date_added:', product.date_added, 'Type:', typeof product.date_added);
+            console.log('Item date_added:', item.date_added, 'Type:', typeof item.date_added);
             
-            if (product.date_added) {
+            if (item.date_added) {
               try {
-                const date = new Date(product.date_added);
+                const date = new Date(item.date_added);
                 console.log('Parsed date:', date, 'Is valid:', !isNaN(date.getTime()));
                 if (!isNaN(date.getTime())) {
                   formattedDate = date.toLocaleString('en-IN', {
@@ -494,7 +496,7 @@
                   console.log('Formatted date:', formattedDate);
                 } else {
                   // Try alternative date parsing
-                  const altDate = new Date(product.date_added + 'T00:00:00');
+                  const altDate = new Date(item.date_added + 'T00:00:00');
                   if (!isNaN(altDate.getTime())) {
                     formattedDate = altDate.toLocaleString('en-IN', {
                       timeZone: 'Asia/Kolkata',
@@ -506,11 +508,11 @@
                   }
                 }
               } catch (error) {
-                console.log('Date formatting error:', error, 'Raw date:', product.date_added);
-                formattedDate = product.date_added || 'Invalid date'; // Show raw value if formatting fails
+                console.log('Date formatting error:', error, 'Raw date:', item.date_added);
+                formattedDate = item.date_added || 'Invalid date'; // Show raw value if formatting fails
               }
             } else {
-              console.log('No date_added field found for product:', product.name);
+              console.log('No date_added field found for item:', item.part_name);
               // Fallback to current date if no date is available
               formattedDate = new Date().toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata',
@@ -520,26 +522,26 @@
               });
             }
 
-            const item = document.createElement('div');
-            item.className = 'vendor-item';
-            item.innerHTML = `
-              <div class="vendor-name">${product.name} (${product.variant || ''})</div>
+            const vendorDiv = document.createElement('div');
+            vendorDiv.className = 'vendor-item';
+            vendorDiv.innerHTML = `
+              <div class="vendor-name">${item.part_name} (${item.variant || ''})</div>
               <div class="vendor-details">
-                <strong>Brand:</strong> ${product.brand} | 
-                <strong>Class:</strong> ${product.class_of_product || '-'} | 
-                <strong>Price:</strong> ₹${product.price} | 
-                <strong>Qty:</strong> ${product.quantity}
-                <br><strong>Barcode:</strong> ${product.barcode}
+                <strong>Brand:</strong> ${item.brand} | 
+                <strong>Class:</strong> ${item.class || '-'} | 
+                <strong>Price:</strong> ₹${item.price} | 
+                <strong>Qty:</strong> ${(item.quantity_on_hold + item.quantity_active)}
+                <br><strong>Barcode:</strong> ${item.barcode}
                 ${vendorInfo ? `<br><strong>Vendor:</strong> ${vendorInfo}` : '<br><strong>Vendor:</strong> Not available'}
                 ${batchInfo ? `<br><strong>Batch ID:</strong> ${batchInfo}` : ''}
                 <br><strong>Date Added:</strong> ${formattedDate}
               </div>
             `;
-            item.onclick = () => {
-              document.getElementById('searchInput').value = product.barcode;
+            vendorDiv.onclick = () => {
+              document.getElementById('searchInput').value = item.barcode;
               resultsDiv.style.display = 'none';
             };
-            resultsDiv.appendChild(item);
+            resultsDiv.appendChild(vendorDiv);
           });
           resultsDiv.style.display = 'block';
         } else {
