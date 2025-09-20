@@ -18,9 +18,9 @@ async function barcodeExists(barcode) {
     .from('products')
     .select('id')
     .eq('barcode', barcode)
-    .single()
   
-  return !error && data
+  // Return true if data exists and has at least one record
+  return !error && data && data.length > 0
 }
 
 // Generate unique barcode
@@ -29,19 +29,25 @@ async function generateUniqueBarcode() {
   let attempts = 0
   const maxAttempts = 10
   
-  do {
-    barcode = generateRandomBarcode()
-    const exists = await barcodeExists(barcode)
-    attempts++
+  try {
+    do {
+      barcode = generateRandomBarcode()
+      const exists = await barcodeExists(barcode)
+      attempts++
+      
+      if (attempts >= maxAttempts) {
+        // Fallback to timestamp-based barcode if too many collisions
+        barcode = 'PRD' + Date.now().toString().slice(-5)
+        break
+      }
+    } while (await barcodeExists(barcode))
     
-    if (attempts >= maxAttempts) {
-      // Fallback to timestamp-based barcode if too many collisions
-      barcode = 'PRD' + Date.now().toString().slice(-5)
-      break
-    }
-  } while (await barcodeExists(barcode))
-  
-  return barcode
+    return barcode
+  } catch (error) {
+    console.error('Error generating unique barcode:', error)
+    // Fallback to timestamp-based barcode if there's an error
+    return 'PRD' + Date.now().toString().slice(-5)
+  }
 }
 
 // Form submission handler
