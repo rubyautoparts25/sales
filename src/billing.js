@@ -26,86 +26,11 @@ document.getElementById('barcodeInput').addEventListener('input',e=>{
   e.target.value=''
 })
 
-document.getElementById('productSearch').addEventListener('input',e=>{
-  const query=e.target.value.trim()
-  if(query.length<2)return
-  searchProducts(query)
-})
+// Product search functionality removed - only barcode scanning is used
 
-async function searchProducts(query){
-  try{
-    const{data,error}=await supabase.from('active_inventory').select('*').ilike('part_name',`%${query}%`).gt('total_active',0).limit(5)
-    if(error){
-      console.error("Search error:",error)
-      return
-    }
-    if(!data||data.length===0){
-      return
-    }
-    // Show search results in a simple dropdown
-    showSearchResults(data)
-  }catch(err){
-    console.error("Search error:",err)
-  }
-}
+// Search functionality removed - only barcode scanning is used for batch-specific inventory
 
-function showSearchResults(products){
-  // Remove existing dropdown
-  const existing=document.getElementById('searchDropdown')
-  if(existing)existing.remove()
-  
-  if(products.length===0)return
-  
-  const dropdown=document.createElement('div')
-  dropdown.id='searchDropdown'
-  dropdown.style.position='absolute'
-  dropdown.style.background='white'
-  dropdown.style.border='1px solid #ccc'
-  dropdown.style.borderRadius='4px'
-  dropdown.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'
-  dropdown.style.maxHeight='200px'
-  dropdown.style.overflowY='auto'
-  dropdown.style.zIndex='1000'
-  dropdown.style.width='300px'
-  dropdown.style.top='100%'
-  dropdown.style.left='0'
-  
-  products.forEach(product=>{
-    const item=document.createElement('div')
-    item.style.padding='10px'
-    item.style.cursor='pointer'
-    item.style.borderBottom='1px solid #eee'
-    item.style.fontSize='14px'
-    item.textContent=`${product.part_name} - ₹${product.price} (${product.total_active} available)`
-    item.addEventListener('mouseenter',()=>{
-      item.style.backgroundColor='#f5f5f5'
-    })
-    item.addEventListener('mouseleave',()=>{
-      item.style.backgroundColor='white'
-    })
-    item.addEventListener('click',()=>{
-      addProductToCart(product)
-      document.getElementById('productSearch').value=''
-      dropdown.remove()
-    })
-    dropdown.appendChild(item)
-  })
-  
-  const searchInput=document.getElementById('productSearch')
-  const container=searchInput.parentNode
-  container.style.position='relative'
-  container.appendChild(dropdown)
-  
-  // Remove dropdown when clicking outside
-  setTimeout(()=>{
-    document.addEventListener('click',function removeDropdown(e){
-      if(!searchInput.contains(e.target)&&!dropdown.contains(e.target)){
-        dropdown.remove()
-        document.removeEventListener('click',removeDropdown)
-      }
-    })
-  },100)
-}
+// showSearchResults function removed - search functionality no longer needed
 
 function addProductToCart(product){
   if(product.total_active<=0){alert("No active stock available");return}

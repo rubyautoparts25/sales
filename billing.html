@@ -51,12 +51,12 @@
       flex: 1;
     }
     
-    .search-row {
+    .barcode-row {
       display: flex;
       gap: 1rem;
     }
     
-    .search-row input {
+    .barcode-row input {
       flex: 1;
     }
     
@@ -174,7 +174,7 @@
     }
     
     @media (max-width: 768px) {
-      .form-row, .search-row {
+      .form-row, .barcode-row {
         flex-direction: column;
       }
       
@@ -229,12 +229,11 @@
     <div id="customerDisplay" class="customer-display"></div>
   </div>
 
-  <!-- Product Search Section -->
+  <!-- Barcode Scanning Section -->
   <div class="section">
-    <h3>🔍 Add Products</h3>
-    <div class="search-row">
+    <h3>📱 Add Products by Barcode</h3>
+    <div class="barcode-row">
       <input type="text" id="barcodeInput" placeholder="📱 Scan or Enter Barcode">
-      <input type="text" id="productSearch" placeholder="🔍 Search products by name...">
     </div>
   </div>
 
