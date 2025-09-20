@@ -4,6 +4,18 @@ let allInventory = []
 
 // Load inventory data
 async function loadInventory() {
+  console.log('loadInventory called')
+  
+  // Check if element exists
+  const container = document.getElementById('inventoryTable')
+  console.log('inventoryTable element:', container)
+  
+  if (!container) {
+    console.error('inventoryTable element not found, retrying in 100ms')
+    setTimeout(loadInventory, 100)
+    return
+  }
+  
   try {
     const { data, error } = await supabase
       .from('batch_details')
@@ -17,13 +29,23 @@ async function loadInventory() {
     
   } catch (error) {
     console.error('Error loading inventory:', error)
-    document.getElementById('inventoryTable').innerHTML = '<div class="no-data">Error loading inventory. Please try again.</div>'
+    const container = document.getElementById('inventoryTable')
+    if (container) {
+      container.innerHTML = '<div class="no-data">Error loading inventory. Please try again.</div>'
+    } else {
+      console.error('inventoryTable element not found for error display')
+    }
   }
 }
 
 // Display inventory in table
 function displayInventory(inventory) {
   const container = document.getElementById('inventoryTable')
+  
+  if (!container) {
+    console.error('inventoryTable element not found')
+    return
+  }
   
   if (inventory.length === 0) {
     container.innerHTML = '<div class="no-data">No inventory items found</div>'
@@ -326,4 +348,9 @@ window.deleteInventoryItem = deleteInventoryItem
 window.filterInventory = filterInventory
 
 // Load inventory on page load
-document.addEventListener('DOMContentLoaded', loadInventory)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadInventory)
+} else {
+  // DOM is already loaded
+  loadInventory()
+}
