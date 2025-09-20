@@ -21,8 +21,15 @@ function getCurrentBatchInfo(){
 }
 
 window.filterInventory=function(){
-  const query=document.getElementById('searchInput').value.toLowerCase()
-  const rows=document.querySelectorAll('#inventoryTable tbody tr')
+  const searchInput = document.getElementById('searchInput')
+  const inventoryTable = document.getElementById('inventoryTable')
+  
+  if (!searchInput || !inventoryTable) {
+    return // Elements don't exist on this page
+  }
+  
+  const query = searchInput.value.toLowerCase()
+  const rows = inventoryTable.querySelectorAll('tbody tr')
   rows.forEach(row=>{
     const text=row.textContent.toLowerCase()
     row.style.display=text.includes(query)?'':'none'
@@ -120,7 +127,18 @@ async function loadInventory(){
 
     if (error) throw error;
     
-    const tbody = document.querySelector('#inventoryTable tbody');
+    const inventoryTable = document.getElementById('inventoryTable');
+    if (!inventoryTable) {
+      console.log('inventoryTable not found - this page does not display inventory table');
+      return;
+    }
+    
+    const tbody = inventoryTable.querySelector('tbody');
+    if (!tbody) {
+      console.log('inventoryTable tbody not found');
+      return;
+    }
+    
     tbody.innerHTML = '';
 
     data.forEach(item => {
@@ -561,4 +579,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-loadInventory()
+// Only load inventory if the inventory table exists on this page
+if (document.getElementById('inventoryTable')) {
+  loadInventory()
+}
