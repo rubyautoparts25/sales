@@ -1,6 +1,6 @@
 import './style.css'
 import JsBarcode from 'jsbarcode'
-import { supabase, deleteProduct as deleteProductFromDB } from './database.js'
+import { supabase, deleteProduct as deleteProductFromDB, getProductBarcodes } from './database.js'
 
 let currentBarcode=null
 
@@ -105,11 +105,12 @@ async function loadInventory(){
         <td>${product.price}</td>
         <td>${totalPrice}</td>
         <td>${product.shelf_code || '-'}</td>
+        <td>${product.batch_count} batches</td>
         <td>${formattedDate}</td>
         <td>
           <button onclick="editProduct('${product.id}')">Edit</button>
           <button onclick="deleteProduct('${product.id}')">Delete</button>
-          <button onclick="renderBarcode('${product.barcode}')">View Barcode</button>
+          <button onclick="showProductBarcodes('${product.id}')">View Barcodes</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -135,6 +136,62 @@ window.deleteProduct = async function(id) {
 
 window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
+}
+
+// Show all barcodes for a product (aggregated view)
+window.showProductBarcodes = async function(productId) {
+  try {
+    const barcodes = await getProductBarcodes(productId);
+    
+    if (barcodes.length === 0) {
+      alert('No barcodes found for this product.');
+      return;
+    }
+    
+    let barcodeList = 'Product Barcodes:\n\n';
+    barcodes.forEach((item, index) => {
+      barcodeList += `${index + 1}. Barcode: ${item.barcode}\n`;
+      barcodeList += `   Batch: ${item.batches.batch_id}\n`;
+      barcodeList += `   Vendor: ${item.batches.vendor_name}\n`;
+      barcodeList += `   Invoice: ${item.batches.vendor_invoice}\n`;
+      barcodeList += `   On Hold: ${item.quantity_on_hold}\n`;
+      barcodeList += `   Active: ${item.quantity_active}\n`;
+      if (item.expiry_date) {
+        barcodeList += `   Expiry: ${item.expiry_date}\n`;
+      }
+      barcodeList += '\n';
+    });
+    
+    // Show in a modal
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = 'white';
+    modal.style.border = '2px solid #333';
+    modal.style.borderRadius = '8px';
+    modal.style.padding = '20px';
+    modal.style.maxWidth = '600px';
+    modal.style.maxHeight = '80vh';
+    modal.style.overflow = 'auto';
+    modal.style.zIndex = '10000';
+    modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+    
+    modal.innerHTML = `
+      <h3>Product Barcodes</h3>
+      <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${barcodeList}</pre>
+      <div style="text-align: center; margin-top: 15px;">
+        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+  } catch (error) {
+    console.error('Error fetching barcodes:', error);
+    alert('Failed to load barcodes: ' + error.message);
+  }
 }
 
 // Load inventory on page load

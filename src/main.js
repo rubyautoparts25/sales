@@ -15,14 +15,10 @@ import {
 
 let currentBarcode=null
 
-// Barcode generation is now handled by database.js
-
 function getCurrentBatchInfo(){
   const currentBatch = sessionStorage.getItem('currentBatch');
   return currentBatch ? JSON.parse(currentBatch) : null;
 }
-
-// Old localStorage batch tracking functions removed - now using database
 
 window.filterInventory=function(){
   const query=document.getElementById('searchInput').value.toLowerCase()
@@ -81,11 +77,11 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
       class: classOfProduct,
       brand: brand,
       price: price,
-      shelf_code: shelf,
+          shelf_code: shelf,
       min_stock: 20,
-      expiry_date: expiryDate
-    };
-    
+          expiry_date: expiryDate
+        };
+        
     // Find existing product
     const existingProduct = await findProduct(productDetails);
     
@@ -115,43 +111,54 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
 
 async function loadInventory(){
   try {
-    const data = await loadInventoryFromDB();
+    // Load unaggregated inventory (individual batch items)
+    const { data, error } = await supabase
+      .from('batch_details')
+      .select('*')
+      .order('batch_date', { ascending: false })
+      .order('part_name', { ascending: true });
+
+    if (error) throw error;
     
     const tbody = document.querySelector('#inventoryTable tbody');
     tbody.innerHTML = '';
 
-    data.forEach(product => {
-      const totalPrice = (product.total_quantity * product.price).toFixed(2);
-      const formattedDate = product.created_at
-        ? new Date(product.created_at).toLocaleString('en-IN', {
+    data.forEach(item => {
+      const totalQuantity = item.quantity_on_hold + item.quantity_active;
+      const totalPrice = (totalQuantity * item.price).toFixed(2);
+      const formattedDate = item.inventory_added_at
+        ? new Date(item.inventory_added_at).toLocaleString('en-IN', {
             timeZone: 'Asia/Kolkata',
             year: 'numeric',
             month: 'short',
             day: 'numeric'
           })
         : '-';
-      const minStock = product.min_stock || 20;
-      const quantityColor = product.total_quantity < minStock ? 'red' : 'black';
+      const batchDate = item.batch_date
+        ? new Date(item.batch_date).toLocaleDateString('en-IN')
+        : '-';
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${product.part_name}</td>
-        <td>${product.variant}</td>
-        <td>${product.class || '-'}</td>
-        <td>${product.brand}</td>
-        <td style="color:${quantityColor}">${product.total_quantity}</td>
-        <td>${product.total_on_hold}</td>
-        <td>${product.total_active}</td>
-        <td>${product.price}</td>
-        <td>${totalPrice}</td>
-        <td>${product.shelf_code || '-'}</td>
-        <td>${product.batch_count} batches</td>
-        <td>${formattedDate}</td>
-        <td>
-          <button onclick="editProduct('${product.id}')">Edit</button>
-          <button onclick="deleteProduct('${product.id}')">Delete</button>
-          <button onclick="showProductBarcodes('${product.id}')">View Barcodes</button>
-        </td>
+        <td>${item.part_name}</td>
+        <td>${item.variant || '-'}</td>
+        <td>${item.class || '-'}</td>
+        <td>${item.brand}</td>
+        <td>${totalQuantity}</td>
+        <td>${item.quantity_on_hold}</td>
+        <td>${item.quantity_active}</td>
+        <td>${item.price}</td>
+      <td>${totalPrice}</td>
+        <td>${item.barcode}</td>
+        <td>${item.batch_number}</td>
+        <td>${item.vendor_name}</td>
+        <td>${batchDate}</td>
+      <td>${formattedDate}</td>
+      <td>
+          <button onclick="editInventoryItem('${item.inventory_id}')">Edit</button>
+          <button onclick="deleteInventoryItem('${item.inventory_id}')">Delete</button>
+          <button onclick="viewBarcode('${item.barcode}')">View Barcode</button>
+      </td>
       `;
       tbody.appendChild(row);
     });
@@ -161,19 +168,170 @@ async function loadInventory(){
   }
 }
 
-window.deleteProduct = async function(id) {
-  if (!confirm("Are you sure you want to delete this part?")) return;
+// New functions for individual inventory items
+window.deleteInventoryItem = async function(inventoryId) {
+  if (!confirm("Are you sure you want to delete this inventory item?")) return;
   
   try {
-    await deleteProductFromDB(id);
-    alert("Part removed.");
+    const { error } = await supabase
+      .from('inventory')
+      .delete()
+      .eq('id', inventoryId);
+    
+    if (error) throw error;
+    alert("Inventory item removed.");
     loadInventory();
   } catch (error) {
     console.error("Delete error:", error);
-    alert("Failed to delete part: " + error.message);
+    alert("Failed to delete inventory item: " + error.message);
   }
 }
 
+window.editInventoryItem = function(inventoryId) {
+  // For now, redirect to edit page with inventory ID
+  window.location.href = `edit.html?inventoryId=${inventoryId}`;
+}
+
+// View barcode for specific batch item (inventory.html)
+window.viewBarcode = async function(barcode) {
+  try {
+    const barcodeInfo = await getBarcodeInfo(barcode);
+    
+    if (!barcodeInfo) {
+      alert('Barcode details not found.');
+      return;
+    }
+    
+    // Generate and display the barcode
+    renderBarcode(barcode);
+    
+    // Show barcode details in a modal
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = 'white';
+    modal.style.border = '2px solid #333';
+    modal.style.borderRadius = '8px';
+    modal.style.padding = '20px';
+    modal.style.maxWidth = '600px';
+    modal.style.zIndex = '10000';
+    modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+    
+    modal.innerHTML = `
+      <h3>Barcode: ${barcode}</h3>
+      <div style="text-align: center; margin: 20px 0;">
+        <svg id="modalBarcode" width="300" height="100"></svg>
+      </div>
+      <div style="text-align: left; font-family: monospace; font-size: 14px;">
+        <p><strong>Product:</strong> ${barcodeInfo.part_name} (${barcodeInfo.variant || ''})</p>
+        <p><strong>Brand:</strong> ${barcodeInfo.brand}</p>
+        <p><strong>Class:</strong> ${barcodeInfo.class || '-'}</p>
+        <p><strong>Price:</strong> ₹${barcodeInfo.price}</p>
+        <p><strong>Batch:</strong> ${barcodeInfo.batch_number}</p>
+        <p><strong>Vendor:</strong> ${barcodeInfo.vendor_name}</p>
+        <p><strong>Invoice:</strong> ${barcodeInfo.vendor_invoice}</p>
+        <p><strong>On Hold:</strong> ${barcodeInfo.quantity_on_hold}</p>
+        <p><strong>Active:</strong> ${barcodeInfo.quantity_active}</p>
+        <p><strong>Batch Date:</strong> ${barcodeInfo.batch_date}</p>
+        ${barcodeInfo.expiry_date ? `<p><strong>Expiry:</strong> ${barcodeInfo.expiry_date}</p>` : ''}
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <button onclick="downloadModalBarcode('${barcode}')" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Download</button>
+        <button onclick="printModalBarcode('${barcode}')" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Print</button>
+        <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Generate barcode in the modal
+    JsBarcode("#modalBarcode", barcode, {
+      format: "CODE128",
+      lineColor: "#000",
+      width: 1.4,
+      height: 25,
+      displayValue: true,
+      fontSize: 10,
+      textMargin: 1
+    });
+    
+  } catch (error) {
+    console.error('Error fetching barcode details:', error);
+    alert('Failed to load barcode details: ' + error.message);
+  }
+}
+
+// Download barcode from modal
+window.downloadModalBarcode = function(barcode) {
+  const svg = document.getElementById('modalBarcode');
+  const serializer = new XMLSerializer();
+  const svgBlob = new Blob([serializer.serializeToString(svg)], {type: "image/svg+xml;charset=utf-8"});
+  const url = URL.createObjectURL(svgBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `barcode-${barcode}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Print barcode from modal
+window.printModalBarcode = async function(barcode) {
+  try {
+    // Get barcode info to access product and batch details
+    const barcodeInfo = await getBarcodeInfo(barcode);
+    
+    if (!barcodeInfo) {
+      alert('Barcode details not found.');
+      return;
+    }
+    
+    const svg = document.getElementById('modalBarcode');
+    
+    // Format batch date as YYMMDD
+    const batchDate = barcodeInfo.batch_date 
+      ? new Date(barcodeInfo.batch_date).toISOString().slice(2, 10).replace(/-/g, '')
+      : 'N/A';
+    
+    const printContent = `
+      <div style="text-align:center;font-family:Arial,sans-serif;font-size:1px;">
+        ${svg.outerHTML}
+        <div style="margin-top:1px;font-size:12px;">₹${barcodeInfo.price}</div>
+        <div style="margin-top:1px;font-size:12px;">${barcodeInfo.part_name}</div>
+        <div style="margin-top:1px;font-size:10px;">${barcodeInfo.brand}</div>
+        <div style="margin-top:1px;font-size:10px;">${batchDate}</div>
+      </div>
+    `;
+
+    const printWindow = window.open('', '', 'width=200,height=120');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Barcode - ${barcode}</title>
+          <style>
+            @media print {
+              @page { margin: 0; }
+              body { margin: 0; padding: 0; }
+            }
+          </style>
+        </head>
+        <body style="margin:0;padding:0;">
+          ${printContent}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    
+  } catch (error) {
+    console.error('Error printing barcode:', error);
+    alert('Failed to print barcode: ' + error.message);
+  }
+}
+
+// Edit product function
 window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
 }
@@ -265,14 +423,14 @@ async function renderBarcode(barcode){
       : '-';
 
     document.getElementById("productDetails").innerHTML = `
-      <h3>Product Details</h3>
+    <h3>Product Details</h3>
       <p><strong>Name:</strong> ${data.part_name}</p>
       <p><strong>Variant:</strong> ${data.variant || '-'}</p>
       <p><strong>Class:</strong> ${data.class || '-'}</p>
-      <p><strong>Brand:</strong> ${data.brand}</p>
-      <p><strong>Price:</strong> ₹${data.price}</p>
+    <p><strong>Brand:</strong> ${data.brand}</p>
+    <p><strong>Price:</strong> ₹${data.price}</p>
       <p><strong>Shelf:</strong> ${data.shelf_code || '-'}</p>
-      <p><strong>Date Added:</strong> ${formattedDate}</p>
+    <p><strong>Date Added:</strong> ${formattedDate}</p>
     `;
   } catch (error) {
     console.error("Error fetching product details:", error);
@@ -360,7 +518,7 @@ nameInput.addEventListener('input',async()=>{
     suggestions.style.display='none'
     return
   }
-  
+
   suggestions.style.display='block'
 
   try {
