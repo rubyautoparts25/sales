@@ -1,6 +1,6 @@
 import './style.css'
 import JsBarcode from 'jsbarcode'
-import { supabase, deleteProduct as deleteProductFromDB, getProductBarcodes, getActiveProductBarcodes } from './database.js'
+import { supabase, getProductBarcodes, getActiveProductBarcodes } from './database.js'
 
 let currentBarcode=null
 
@@ -84,7 +84,6 @@ async function loadInventory(){
         <td>${product.shelf_code || '-'}</td>
         <td>${formattedDate}</td>
         <td>
-          <button onclick="deleteProduct('${product.id}')">Delete</button>
           <button onclick="showProductBarcodes('${product.id}')">View Barcodes</button>
         </td>
       `;
@@ -96,18 +95,6 @@ async function loadInventory(){
   }
 }
 
-window.deleteProduct = async function(id) {
-  if (!confirm('Are you sure you want to delete this product?')) return;
-  
-  try {
-    await deleteProductFromDB(id);
-    alert("Product deleted successfully.");
-    loadInventory();
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    alert("Failed to delete product: " + error.message);
-  }
-}
 
 
 // Show only active barcodes for a product (active inventory view)

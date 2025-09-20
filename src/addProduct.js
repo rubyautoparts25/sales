@@ -2,60 +2,9 @@ import { supabase } from './database.js'
 
 let allProducts = []
 
-// Generate random barcode
-function generateRandomBarcode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = ''
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
-}
-
-// Check if barcode already exists
-async function barcodeExists(barcode) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('id')
-    .eq('barcode', barcode)
-  
-  // Return true if data exists and has at least one record
-  return !error && data && data.length > 0
-}
-
-// Generate unique barcode
-async function generateUniqueBarcode() {
-  let barcode
-  let attempts = 0
-  const maxAttempts = 10
-  
-  try {
-    do {
-      barcode = generateRandomBarcode()
-      const exists = await barcodeExists(barcode)
-      attempts++
-      
-      if (attempts >= maxAttempts) {
-        // Fallback to timestamp-based barcode if too many collisions
-        barcode = 'PRD' + Date.now().toString().slice(-5)
-        break
-      }
-    } while (await barcodeExists(barcode))
-    
-    return barcode
-  } catch (error) {
-    console.error('Error generating unique barcode:', error)
-    // Fallback to timestamp-based barcode if there's an error
-    return 'PRD' + Date.now().toString().slice(-5)
-  }
-}
-
 // Form submission handler
 document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault()
-  
-  // Generate unique barcode first
-  const barcode = await generateUniqueBarcode()
   
   const formData = {
     part_name: document.getElementById('partName').value.trim(),
@@ -63,8 +12,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     class: document.getElementById('class').value,
     brand: document.getElementById('brand').value.trim(),
     price: parseFloat(document.getElementById('price').value),
-    shelf_code: document.getElementById('shelfCode').value.trim(),
-    barcode: barcode
+    shelf_code: document.getElementById('shelfCode').value.trim()
   }
   
   try {
@@ -94,7 +42,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     
     if (error) throw error
     
-    showSuccess(`Product "${formData.part_name}" added successfully! Barcode: ${barcode}`)
+    showSuccess(`Product "${formData.part_name}" added successfully!`)
     clearForm()
     loadExistingProducts() // Refresh the list
     
@@ -109,7 +57,7 @@ async function loadExistingProducts() {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, part_name, variant, class, brand, price, shelf_code, barcode, created_at')
+      .select('id, part_name, variant, class, brand, price, shelf_code, created_at')
       .order('created_at', { ascending: false })
     
     if (error) {
@@ -141,9 +89,6 @@ function displayProducts(products) {
       <div class="product-name">${product.part_name} ${product.variant ? `(${product.variant})` : ''}</div>
       <div class="product-details">
         ${product.class} • ${product.brand} • ₹${product.price.toFixed(2)} ${product.shelf_code ? `• ${product.shelf_code}` : ''}
-      </div>
-      <div class="product-barcode" style="font-size: 0.8rem; color: #666; margin-top: 2px;">
-        Barcode: ${product.barcode || 'N/A'}
       </div>
     </div>
   `).join('')
