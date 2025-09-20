@@ -12,8 +12,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     class: document.getElementById('class').value,
     brand: document.getElementById('brand').value.trim(),
     price: parseFloat(document.getElementById('price').value),
-    shelf_code: document.getElementById('shelfCode').value.trim(),
-    description: document.getElementById('description').value.trim()
+    shelf_code: document.getElementById('shelfCode').value.trim()
   }
   
   try {
