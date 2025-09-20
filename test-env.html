@@ -47,22 +47,13 @@
                 addResult('❌ VITE_SUPABASE_ANON_KEY: Not found', 'error');
             }
             
-            // Test with hardcoded values as fallback
-            const testUrl = supabaseUrl || 'https://aknhtapidbkwksvjsqsu.supabase.co';
-            const testKey = supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE';
-            
-            addResult('', 'info');
-            addResult('Testing with fallback values:', 'info');
-            addResult(`   URL: ${testUrl}`, 'info');
-            addResult(`   Key: ${testKey.substring(0, 20)}...`, 'info');
-            
             // Test Supabase connection
-            if (testUrl && testKey) {
+            if (supabaseUrl && supabaseKey) {
                 addResult('', 'info');
                 addResult('Testing Supabase connection...', 'info');
                 
                 const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-                const supabase = createClient(testUrl, testKey);
+                const supabase = createClient(supabaseUrl, supabaseKey);
                 
                 try {
                     // Test with a simple query
@@ -70,16 +61,16 @@
                     if (error) {
                         addResult(`❌ Supabase connection failed: ${error.message}`, 'error');
                         addResult(`   Error details: ${JSON.stringify(error)}`, 'error');
-                        addResult(`   URL: ${testUrl}`, 'error');
-                        addResult(`   Key: ${testKey.substring(0, 20)}...`, 'error');
+                        addResult(`   URL: ${supabaseUrl}`, 'error');
+                        addResult(`   Key: ${supabaseKey.substring(0, 20)}...`, 'error');
                     } else {
                         addResult('✅ Supabase connection successful!', 'success');
                         addResult(`   Products count: ${data?.[0]?.count || 'N/A'}`, 'success');
                     }
                 } catch (err) {
                     addResult(`❌ Supabase connection error: ${err.message}`, 'error');
-                    addResult(`   URL: ${testUrl}`, 'error');
-                    addResult(`   Key: ${testKey.substring(0, 20)}...`, 'error');
+                    addResult(`   URL: ${supabaseUrl}`, 'error');
+                    addResult(`   Key: ${supabaseKey.substring(0, 20)}...`, 'error');
                 }
             }
             

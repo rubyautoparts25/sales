@@ -2,9 +2,9 @@
 // This file contains the database configuration and connection settings
 
 export const supabaseConfig = {
-  // Supabase project credentials from environment variables with fallbacks
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://aknhtapidbkwksvjsqsu.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE',
+  // Supabase project credentials from environment variables
+  url: import.meta.env.VITE_SUPABASE_URL,
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
   
   // Database table names (new structure)
   tables: {
@@ -35,7 +35,7 @@ export const supabaseConfig = {
 // Get Supabase configuration from environment variables
 export const getSupabaseConfig = () => {
   return {
-    url: import.meta.env.VITE_SUPABASE_URL || supabaseConfig.url,
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || supabaseConfig.anonKey
+    url: import.meta.env.VITE_SUPABASE_URL,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
   };
 };
