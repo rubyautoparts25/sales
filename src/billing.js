@@ -180,6 +180,13 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
   if(cart.length===0){alert("Cart is empty");return}
   if(!billPrinted){alert("Please print the bill first before finalizing");return}
   
+  // Prevent multiple clicks
+  const finalizeBtn = document.getElementById('finalizeBill')
+  if(finalizeBtn.disabled) return
+  
+  finalizeBtn.disabled = true
+  finalizeBtn.textContent = 'Finalizing...'
+  
   const total=cart.reduce((sum,i)=>sum+(i.price*i.qty),0)
   try{
     const{data:bill,error:billErr}=await supabase.from('bills').insert([{
@@ -218,12 +225,23 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
   }catch(err){
     console.error("Finalize bill error:",err)
     alert("Failed to create bill.")
+  }finally{
+    // Reset button state
+    finalizeBtn.disabled = false
+    finalizeBtn.textContent = 'Finalize Bill'
   }
 })
 
 document.getElementById('printBill').addEventListener('click',async()=>{
   if(!customer.name){alert("Set customer first");return}
   if(cart.length===0){alert("Cart is empty");return}
+  
+  // Prevent multiple clicks
+  const printBtn = document.getElementById('printBill')
+  if(printBtn.disabled) return
+  
+  printBtn.disabled = true
+  printBtn.textContent = 'Printing...'
   
   // Create a temporary bill for printing (not saved to database yet)
   const total=cart.reduce((sum,i)=>sum+(i.price*i.qty),0)
@@ -283,4 +301,8 @@ document.getElementById('printBill').addEventListener('click',async()=>{
   // Set flag that bill has been printed
   billPrinted=true
   alert("Bill printed. You can now finalize the bill.")
+  
+  // Reset button state
+  printBtn.disabled = false
+  printBtn.textContent = 'Print Bill'
 })
