@@ -266,10 +266,15 @@
   <script>
     // Set current user
     document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
-    
-    // Load existing products on page load
-    loadExistingProducts();
   </script>
   <script type="module" src="./src/addProduct.js"></script>
+  <script>
+    // Load existing products after module loads
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.loadExistingProducts) {
+        window.loadExistingProducts();
+      }
+    });
+  </script>
 </body>
 </html>

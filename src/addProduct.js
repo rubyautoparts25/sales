@@ -17,18 +17,21 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
   
   try {
     // Check if product already exists
-    const { data: existingProduct } = await supabase
+    const { data: existingProducts, error: checkError } = await supabase
       .from('products')
       .select('id')
       .eq('part_name', formData.part_name)
       .eq('variant', formData.variant)
       .eq('brand', formData.brand)
-      .single()
     
-    if (existingProduct) {
+    if (checkError) {
+      console.error('Error checking existing product:', checkError)
+      // Continue with insertion if check fails
+    } else if (existingProducts && existingProducts.length > 0) {
       showError('Product with this name, variant, and brand already exists!')
       return
     }
+    
     
     // Insert new product
     const { data, error } = await supabase
@@ -57,7 +60,11 @@ async function loadExistingProducts() {
       .select('id, part_name, variant, class, brand, price, shelf_code, created_at')
       .order('created_at', { ascending: false })
     
-    if (error) throw error
+    if (error) {
+      console.error('Error loading products:', error)
+      showError('Failed to load existing products.')
+      return
+    }
     
     allProducts = data || []
     displayProducts(allProducts)
@@ -160,3 +167,9 @@ function hideMessages(delay = 0) {
 // Make functions globally available
 window.selectProduct = selectProduct
 window.searchExistingProducts = searchExistingProducts
+window.loadExistingProducts = loadExistingProducts
+
+// Load existing products when module loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadExistingProducts()
+})
