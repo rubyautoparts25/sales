@@ -15,43 +15,58 @@ window.addEventListener('DOMContentLoaded', function() {
 
 async function fetchProductByBarcode(barcode) {
   try {
-    // First try to get from onhold_inventory view
-    const { data: onholdData, error: onholdError } = await supabase
-      .from('onhold_inventory')
-      .select('*')
-      .eq('barcode', barcode)
-      .single();
-
-    if (!onholdError && onholdData && onholdData.total_on_hold > 0) {
-      return onholdData;
-    }
-
-    // If not found in onhold_inventory, try products table
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('barcode', barcode)
-      .single();
-
-    if (error || !data) {
-      showResult('Product not found with this barcode.', 'error');
-      return null;
-    }
-
-    // Check if product has any on-hold inventory
+    // Query the inventory table with barcode to get product and batch details
     const { data: inventoryData, error: inventoryError } = await supabase
       .from('inventory')
-      .select('qty_on_hold')
-      .eq('product_id', data.id)
-      .gt('qty_on_hold', 0);
+      .select(`
+        barcode,
+        quantity_on_hold,
+        quantity_active,
+        expiry_date,
+        products!inner(
+          id,
+          part_name,
+          variant,
+          brand,
+          class,
+          price,
+          shelf_code,
+          min_stock
+        ),
+        batches!inner(
+          id,
+          batch_id,
+          batch_date,
+          vendor_name,
+          vendor_invoice
+        )
+      `)
+      .eq('barcode', barcode)
+      .gt('quantity_on_hold', 0)
+      .single();
 
-    if (inventoryError || !inventoryData || inventoryData.length === 0) {
-      showResult('This product has no quantity on hold to activate.', 'error');
+    if (inventoryError || !inventoryData) {
+      showResult('Product not found with this barcode or no quantity on hold.', 'error');
       return null;
     }
 
-    const totalOnHold = inventoryData.reduce((sum, inv) => sum + (inv.qty_on_hold || 0), 0);
-    return { ...data, total_on_hold: totalOnHold };
+    // Return the data in the expected format
+    return {
+      id: inventoryData.products.id,
+      part_name: inventoryData.products.part_name,
+      variant: inventoryData.products.variant,
+      brand: inventoryData.products.brand,
+      class: inventoryData.products.class,
+      price: inventoryData.products.price,
+      shelf_code: inventoryData.products.shelf_code,
+      min_stock: inventoryData.products.min_stock,
+      barcode: inventoryData.barcode,
+      total_on_hold: inventoryData.quantity_on_hold,
+      batch_id: inventoryData.batches.batch_id,
+      batch_date: inventoryData.batches.batch_date,
+      vendor_name: inventoryData.batches.vendor_name,
+      vendor_invoice: inventoryData.batches.vendor_invoice
+    };
   } catch (error) {
     console.error('Error fetching product:', error);
     showResult('Error fetching product details.', 'error');
@@ -105,9 +120,22 @@ async function activateProductQuantity(quantityToActivate) {
 
   try {
     // Use the database function to activate inventory
+    // We need to get the batch ID for the specific barcode
+    const { data: inventoryData, error: inventoryError } = await supabase
+      .from('inventory')
+      .select('batch_id')
+      .eq('barcode', currentProduct.barcode)
+      .single();
+
+    if (inventoryError || !inventoryData) {
+      showResult('Inventory item not found.', 'error');
+      return;
+    }
+
     const { data, error } = await supabase.rpc('activate_inventory', {
       p_product_id: currentProduct.id,
-      p_quantity: quantityToActivate
+      p_quantity: quantityToActivate,
+      p_batch_id: inventoryData.batch_id
     });
 
     if (error) {
