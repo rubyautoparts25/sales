@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Billing - Ruby Auto Parts</title>
+  <title>Inventory List - Ruby Auto Parts</title>
   <script>
     // Check authentication
     if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
@@ -41,154 +41,130 @@
       font-weight: 600;
     }
     
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      align-items: end;
+    .search-container {
+      margin-bottom: 1.5rem;
     }
     
-    .form-row input {
-      flex: 1;
-    }
-    
-    .search-row {
-      display: flex;
-      gap: 1rem;
-    }
-    
-    .search-row input {
-      flex: 1;
-    }
-    
-    input {
-      font-family: inherit;
-      font-size: 0.95rem;
+    .search-input {
+      width: 100%;
       padding: 0.75rem;
       border: 2px solid #e9ecef;
       border-radius: 6px;
-      background: white;
-      color: #333;
+      font-size: 1rem;
       transition: border-color 0.2s;
     }
     
-    input:focus {
+    .search-input:focus {
       outline: none;
       border-color: #3498db;
     }
     
-    button {
-      font-family: inherit;
-      font-size: 0.95rem;
-      padding: 0.75rem 1.5rem;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 0.9rem;
       font-weight: 500;
       transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+      margin: 0.25rem;
     }
     
     .btn-primary {
-      background: #27ae60;
+      background: #3498db;
       color: white;
     }
     
     .btn-primary:hover {
-      background: #229954;
+      background: #2980b9;
     }
     
-    .btn-secondary {
-      background: #6c757d;
+    .btn-danger {
+      background: #e74c3c;
       color: white;
     }
     
-    .btn-secondary:hover {
-      background: #5a6268;
+    .btn-danger:hover {
+      background: #c0392b;
     }
     
-    .customer-display {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      background: #e8f5e8;
-      border-radius: 6px;
-      color: #27ae60;
-      font-weight: 500;
-      display: none;
+    .btn-info {
+      background: #17a2b8;
+      color: white;
     }
     
-    .cart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+    .btn-info:hover {
+      background: #138496;
     }
     
-    .cart-total {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #27ae60;
+    .btn-warning {
+      background: #f39c12;
+      color: white;
     }
     
-    .cart-table-container {
-      overflow-x: auto;
-      margin-bottom: 1.5rem;
+    .btn-warning:hover {
+      background: #e67e22;
     }
     
-    #cart-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    
-    #cart-table th {
-      background: #f8f9fa;
-      color: #495057;
-      font-weight: 600;
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 2px solid #e9ecef;
-    }
-    
-    #cart-table td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #e9ecef;
-    }
-    
-    #cart-table tr:hover {
-      background: #f8f9fa;
-    }
-    
-    #cart-table input[type="number"] {
-      width: 60px;
-      padding: 0.5rem;
+    .no-data {
       text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+      font-style: italic;
     }
     
-    .cart-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-    
-    .cart-actions button {
-      min-width: 120px;
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #3498db;
     }
     
     @media (max-width: 768px) {
-      .form-row, .search-row {
-        flex-direction: column;
+      table {
+        font-size: 0.8rem;
       }
       
-      .cart-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
+      th, td {
+        padding: 0.5rem;
       }
       
-      .cart-actions {
-        flex-direction: column;
+      .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
       }
     }
-    </style>
+  </style>
 </head>
 <body>
   <!-- Navigation -->
@@ -196,7 +172,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
       <div style="display: flex; align-items: center; gap: 1rem;">
         <h2 style="margin: 0; font-size: 1.2rem;">🏢 Ruby Auto Parts</h2>
-        <span style="font-size: 0.9rem; color: #bdc3c7;">Billing System</span>
+        <span style="font-size: 0.9rem; color: #bdc3c7;">Inventory List</span>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <span style="font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
@@ -216,61 +192,27 @@
       <a href="metrics.html" style="background: #8e44ad; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📊 Metrics</a>
     </div>
   </nav>
-  <!-- Customer Section -->
-  <div class="section">
-    <h3>👤 Customer Information</h3>
-    <form id="customerForm" class="customer-form">
-      <div class="form-row">
-        <input type="text" id="customerName" placeholder="Customer Name" required>
-        <input type="text" id="customerPhone" placeholder="Phone Number">
-        <button type="submit">Set Customer</button>
-      </div>
-    </form>
-    <div id="customerDisplay" class="customer-display"></div>
-  </div>
 
-  <!-- Product Search Section -->
+  <!-- Search Section -->
   <div class="section">
-    <h3>🔍 Add Products</h3>
-    <div class="search-row">
-      <input type="text" id="barcodeInput" placeholder="📱 Scan or Enter Barcode">
-      <input type="text" id="productSearch" placeholder="🔍 Search products by name...">
+    <h3>🔍 Search Inventory</h3>
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by part name, variant, brand, barcode, or batch ID..." oninput="filterInventory()">
     </div>
   </div>
 
-  <!-- Cart Section -->
-  <div class="section cart-section">
-    <div class="cart-header">
-      <h3>🛒 Shopping Cart</h3>
-      <div class="cart-total">
-        <span>Total: ₹<span id="grandTotal">0</span></span>
-      </div>
-    </div>
-    
-    <div class="cart-table-container">
-      <table id="cart-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Qty</th>
-            <th>Total</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    
-    <div class="cart-actions">
-      <button id="printBill" class="btn-secondary">🖨️ Print Bill</button>
-      <button id="finalizeBill" class="btn-primary">✅ Finalize Bill</button>
+  <!-- Inventory Table -->
+  <div class="section">
+    <h3>📋 Complete Inventory</h3>
+    <div id="inventoryTable">
+      <div class="loading">Loading inventory...</div>
     </div>
   </div>
+
   <script>
     // Set current user
     document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
   </script>
-  <script type="module" src="./src/billing.js"></script>
+  <script type="module" src="./src/inventoryList.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Inventory - Ruby Auto Parts</title>
+  <title>Add Inventory - Ruby Auto Parts</title>
   <script>
     // Check authentication
     if (sessionStorage.getItem('rubyAutoPartsLoggedIn') !== 'true') {
@@ -231,7 +231,8 @@
     </div>
     
     <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-      <a href="inventory.html" style="background: #3498db; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📦 Inventory</a>
+      <a href="inventory.html" style="background: #3498db; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📦 Add Inventory</a>
+      <a href="inventory-list.html" style="background: #2c3e50; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Inventory List</a>
       <a href="batch.html" style="background: #9b59b6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Batch Management</a>
       <a href="active-inventory.html" style="background: #27ae60; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">✅ Active Stock</a>
       <a href="onhold-inventory.html" style="background: #f39c12; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">⏸️ On-Hold Stock</a>
@@ -280,30 +281,6 @@
     <button type="submit">Add Product</button>
   </form>
 
-  <input type="text" id="searchInput" placeholder="Search inventory..." oninput="filterInventory()">
-
-  <table id="inventoryTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Variant</th>
-        <th>Class</th>
-        <th>Brand</th>
-        <th>Total Qty</th>
-        <th>On-Hold Qty</th>
-        <th>Active Qty</th>
-        <th>Price</th>
-        <th>Total Value</th>
-        <th>Barcode</th>
-        <th>Batch ID</th>
-        <th>Vendor</th>
-        <th>Batch Date</th>
-        <th>Date Added</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
   <h2>Generated Barcode</h2>
   <svg id="barcode"></svg><br>

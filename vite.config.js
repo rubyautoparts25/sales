@@ -14,7 +14,8 @@ export default defineConfig({
         metrics: './metrics.html',
         activate: 'activate.html',
         batch: 'batch.html',
-        'add-product': 'add-product.html'
+        'add-product': 'add-product.html',
+        'inventory-list': 'inventory-list.html'
       }
     }
   }
