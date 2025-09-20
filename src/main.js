@@ -572,5 +572,5 @@ document.addEventListener('click', (e) => {
 
 // Only load inventory if the inventory table exists on this page
 if (document.getElementById('inventoryTable')) {
-  loadInventory()
+loadInventory()
 }

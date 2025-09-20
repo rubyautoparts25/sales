@@ -23,8 +23,7 @@ export default defineConfig({
         activate: 'activate.html',
         batch: 'batch.html',
         'add-product': 'add-product.html',
-        'inventory-list': 'inventory-list.html',
-        'test-env': 'test-env.html'
+        'inventory-list': 'inventory-list.html'
       }
     }
   }
