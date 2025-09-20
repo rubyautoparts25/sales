@@ -261,7 +261,7 @@ async function loadInventory(){
         <td>${formattedDate}</td>
         <td>
           <button onclick="activateInventoryItem('${item.barcode}')">Activate</button>
-          <button onclick="deleteInventoryItem('${item.inventory_id}')">Delete</button>
+          <button onclick="deleteInventoryItem('${item.id}')">Delete</button>
           <button onclick="viewBarcode('${item.barcode}')">View Barcode</button>
         </td>
       `;
