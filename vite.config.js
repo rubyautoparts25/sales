@@ -1,5 +1,14 @@
 import { defineConfig } from 'vite'
 
+// Validate required environment variables
+const requiredEnvVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName])
+
+if (missingVars.length > 0) {
+  console.warn(`⚠️  Missing environment variables: ${missingVars.join(', ')}`)
+  console.warn('   Using fallback values from supabase.config.js')
+}
+
 export default defineConfig({
   build: {
     rollupOptions: {
@@ -14,7 +23,8 @@ export default defineConfig({
         activate: 'activate.html',
         batch: 'batch.html',
         'add-product': 'add-product.html',
-        'inventory-list': 'inventory-list.html'
+        'inventory-list': 'inventory-list.html',
+        'test-env': 'test-env.html'
       }
     }
   }
