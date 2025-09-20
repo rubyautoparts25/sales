@@ -90,7 +90,6 @@ function displayInventory(inventory) {
             <td><strong style="font-size: 0.8rem;">${item.quantity_on_hold + item.quantity_active}</strong></td>
             <td>
               <button class="btn btn-info" onclick="viewBarcode('${item.barcode}')">View</button>
-              <button class="btn btn-warning" onclick="editInventoryItem('${item.barcode}')">Edit</button>
               <button class="btn btn-danger" onclick="deleteInventoryItem('${item.barcode}')">Del</button>
             </td>
           </tr>
@@ -308,11 +307,6 @@ function printModalBarcode(barcode, productName, brand, price, batchDate) {
   printWindow.document.close()
 }
 
-// Edit inventory item
-function editInventoryItem(barcode) {
-  // Edit functionality removed - use inventory management instead
-  alert('Edit functionality has been removed. Use the inventory management system instead.');
-}
 
 // Delete inventory item
 async function deleteInventoryItem(barcode) {
@@ -341,7 +335,6 @@ async function deleteInventoryItem(barcode) {
 window.viewBarcode = viewBarcode
 window.downloadBarcode = downloadBarcode
 window.printModalBarcode = printModalBarcode
-window.editInventoryItem = editInventoryItem
 window.deleteInventoryItem = deleteInventoryItem
 window.filterInventory = filterInventory
 

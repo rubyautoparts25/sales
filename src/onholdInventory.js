@@ -114,12 +114,6 @@ window.activateInventoryItem = async function(barcode) {
   }
 }
 
-// Edit inventory item function
-window.editInventoryItem = async function(inventoryId) {
-  // For now, redirect to main inventory page for editing
-  // This could be enhanced with a dedicated edit modal
-  alert('Edit functionality - redirect to main inventory page');
-}
 
 // Delete inventory item function
 window.deleteInventoryItem = async function(inventoryId) {
@@ -267,7 +261,6 @@ async function loadInventory(){
         <td>${formattedDate}</td>
         <td>
           <button onclick="activateInventoryItem('${item.barcode}')">Activate</button>
-          <button onclick="editInventoryItem('${item.inventory_id}')">Edit</button>
           <button onclick="deleteInventoryItem('${item.inventory_id}')">Delete</button>
           <button onclick="viewBarcode('${item.barcode}')">View Barcode</button>
         </td>
@@ -293,10 +286,6 @@ window.deleteProduct = async function(id) {
   }
 }
 
-window.editProduct=function(id){
-  // Edit functionality removed - use inventory management instead
-  alert('Edit functionality has been removed. Use the inventory management system instead.');
-}
 
 // Load inventory on page load
 loadInventory()

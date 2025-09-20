@@ -84,7 +84,6 @@ async function loadInventory(){
         <td>${product.shelf_code || '-'}</td>
         <td>${formattedDate}</td>
         <td>
-          <button onclick="editProduct('${product.id}')">Edit</button>
           <button onclick="deleteProduct('${product.id}')">Delete</button>
           <button onclick="showProductBarcodes('${product.id}')">View Barcodes</button>
         </td>
@@ -110,10 +109,6 @@ window.deleteProduct = async function(id) {
   }
 }
 
-window.editProduct=function(id){
-  // Edit functionality removed - use inventory management instead
-  alert('Edit functionality has been removed. Use the inventory management system instead.');
-}
 
 // Show only active barcodes for a product (active inventory view)
 window.showProductBarcodes = async function(productId) {

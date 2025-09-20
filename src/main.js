@@ -173,7 +173,6 @@ async function loadInventory(){
         <td>${batchDate}</td>
       <td>${formattedDate}</td>
       <td>
-          <button onclick="editInventoryItem('${item.inventory_id}')">Edit</button>
           <button onclick="deleteInventoryItem('${item.inventory_id}')">Delete</button>
           <button onclick="viewBarcode('${item.barcode}')">View Barcode</button>
       </td>
@@ -205,11 +204,6 @@ window.deleteInventoryItem = async function(inventoryId) {
   }
 }
 
-window.editInventoryItem = function(inventoryId) {
-  // For now, redirect to edit page with inventory ID
-  // Edit functionality removed - use inventory management instead
-  alert('Edit functionality has been removed. Use the inventory management system instead.');
-}
 
 // View barcode for specific batch item (inventory.html)
 window.viewBarcode = async function(barcode) {
@@ -362,11 +356,6 @@ window.printModalBarcode = async function(barcode) {
   }
 }
 
-// Edit product function
-window.editProduct=function(id){
-  // Edit functionality removed - use inventory management instead
-  alert('Edit functionality has been removed. Use the inventory management system instead.');
-}
 
 // Show all barcodes for a product
 window.showProductBarcodes = async function(productId) {
