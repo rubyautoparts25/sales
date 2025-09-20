@@ -294,7 +294,8 @@ window.deleteProduct = async function(id) {
 }
 
 window.editProduct=function(id){
-  window.location.href=`edit.html?id=${id}`
+  // Edit functionality removed - use inventory management instead
+  alert('Edit functionality has been removed. Use the inventory management system instead.');
 }
 
 // Load inventory on page load

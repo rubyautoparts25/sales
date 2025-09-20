@@ -310,10 +310,8 @@ function printModalBarcode(barcode, productName, brand, price, batchDate) {
 
 // Edit inventory item
 function editInventoryItem(barcode) {
-  // For now, redirect to main inventory page with edit mode
-  // This could be enhanced with a proper edit modal
-  alert('Edit functionality - redirect to main inventory page')
-  window.location.href = 'inventory.html'
+  // Edit functionality removed - use inventory management instead
+  alert('Edit functionality has been removed. Use the inventory management system instead.');
 }
 
 // Delete inventory item

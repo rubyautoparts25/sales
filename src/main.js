@@ -207,7 +207,8 @@ window.deleteInventoryItem = async function(inventoryId) {
 
 window.editInventoryItem = function(inventoryId) {
   // For now, redirect to edit page with inventory ID
-  window.location.href = `edit.html?inventoryId=${inventoryId}`;
+  // Edit functionality removed - use inventory management instead
+  alert('Edit functionality has been removed. Use the inventory management system instead.');
 }
 
 // View barcode for specific batch item (inventory.html)
@@ -363,7 +364,8 @@ window.printModalBarcode = async function(barcode) {
 
 // Edit product function
 window.editProduct=function(id){
-  window.location.href=`edit.html?id=${id}`
+  // Edit functionality removed - use inventory management instead
+  alert('Edit functionality has been removed. Use the inventory management system instead.');
 }
 
 // Show all barcodes for a product

@@ -10,7 +10,6 @@ export default defineConfig({
         'active-inventory': 'active-inventory.html',
         'onhold-inventory': 'onhold-inventory.html',
         billing: 'billing.html',
-        edit: 'edit.html',
         metrics: './metrics.html',
         activate: 'activate.html',
         batch: 'batch.html',
