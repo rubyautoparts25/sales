@@ -35,6 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
     barcodeInput.focus()
 })
 
+// Logout function to match site functionality
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        window.location.href = 'login.html'
+    }
+}
+
 /**
  * Handle barcode scanning
  */
