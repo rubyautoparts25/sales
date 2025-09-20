@@ -1,10 +1,55 @@
-import { supabase, createProduct } from './database.js'
+import { supabase } from './database.js'
 
 let allProducts = []
+
+// Generate random barcode
+function generateRandomBarcode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+// Check if barcode already exists
+async function barcodeExists(barcode) {
+  const { data, error } = await supabase
+    .from('products')
+    .select('id')
+    .eq('barcode', barcode)
+    .single()
+  
+  return !error && data
+}
+
+// Generate unique barcode
+async function generateUniqueBarcode() {
+  let barcode
+  let attempts = 0
+  const maxAttempts = 10
+  
+  do {
+    barcode = generateRandomBarcode()
+    const exists = await barcodeExists(barcode)
+    attempts++
+    
+    if (attempts >= maxAttempts) {
+      // Fallback to timestamp-based barcode if too many collisions
+      barcode = 'PRD' + Date.now().toString().slice(-5)
+      break
+    }
+  } while (await barcodeExists(barcode))
+  
+  return barcode
+}
 
 // Form submission handler
 document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault()
+  
+  // Generate unique barcode first
+  const barcode = await generateUniqueBarcode()
   
   const formData = {
     part_name: document.getElementById('partName').value.trim(),
@@ -13,7 +58,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     brand: document.getElementById('brand').value.trim(),
     price: parseFloat(document.getElementById('price').value),
     shelf_code: document.getElementById('shelfCode').value.trim(),
-    min_stock: 20 // Default minimum stock
+    barcode: barcode
   }
   
   try {
@@ -34,11 +79,16 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     }
     
     
-    // Insert new product using the centralized createProduct function
-    // This will generate a barcode for the product
-    const data = await createProduct(formData, null) // barcode will be generated automatically
+    // Insert new product
+    const { data, error } = await supabase
+      .from('products')
+      .insert([formData])
+      .select()
+      .single()
     
-    showSuccess(`Product "${formData.part_name}" added successfully!`)
+    if (error) throw error
+    
+    showSuccess(`Product "${formData.part_name}" added successfully! Barcode: ${barcode}`)
     clearForm()
     loadExistingProducts() // Refresh the list
     
