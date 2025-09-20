@@ -9,14 +9,6 @@
       window.location.href = 'login.html';
     }
     
-    function checkPassword() {
-      const password=prompt("Enter passcode to access analytics:")
-      if(password==="caliberparts2025") {
-        window.location.href="billing.html"
-      } else {
-        alert("Incorrect password. Access denied.")
-      }
-    }
     function checkMetrics(){
       const password=prompt("Enter passcode to access metrics:")
       if(password==="caliberparts2025"){
@@ -312,7 +304,7 @@
       <button onclick="window.location.href='batch.html'">Batch Management</button>
       <button onclick="window.location.href='active-inventory.html'">Active Inventory</button>
       <button onclick="window.location.href='onhold-inventory.html'">On-Hold Inventory</button>
-      <button onclick="checkPassword()">Go to Billing</button>
+      <button onclick="window.location.href='billing.html'">Go to Billing</button>
       <button onclick="checkMetrics()">View Metrics</button>
       <button onclick="window.location.href='activate.html'">Activate Products</button>
     </div>

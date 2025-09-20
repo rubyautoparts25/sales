@@ -302,5 +302,29 @@ export async function getProductBarcodes(productId) {
   return data;
 }
 
+// Get only active barcodes for a specific product
+export async function getActiveProductBarcodes(productId) {
+  const { data, error } = await supabase
+    .from('inventory')
+    .select(`
+      barcode,
+      quantity_on_hold,
+      quantity_active,
+      expiry_date,
+      batches!inner(
+        batch_id,
+        batch_date,
+        vendor_name,
+        vendor_invoice
+      )
+    `)
+    .eq('product_id', productId)
+    .gt('quantity_active', 0)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
 // Export the supabase client for direct use if needed
 export { supabase };

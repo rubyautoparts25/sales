@@ -99,7 +99,8 @@ function displayProductDetails(product) {
   activateQuantityInput.value = 1;
   maxQuantityInfo.textContent = `Maximum available on hold: ${product.total_on_hold}`;
 
-  // Product details are now shown in the modal system
+  // Show the product details section
+  document.getElementById('productDetails').style.display = 'block';
 }
 
 async function activateProductQuantity(quantityToActivate) {
@@ -175,26 +176,33 @@ function hideProductDetails() {
   currentProduct = null;
 }
 
-// Event listeners
-document.getElementById('activateForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const barcode = document.getElementById('barcode').value.trim();
-  
-  if (!barcode) {
-    showResult('Please enter a barcode.', 'error');
-    return;
-  }
+// Event listeners - wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('activateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('Form submitted'); // Debug log
+    const barcode = document.getElementById('barcode').value.trim();
+    
+    if (!barcode) {
+      showResult('Please enter a barcode.', 'error');
+      return;
+    }
 
-  const product = await fetchProductByBarcode(barcode);
-  if (product) {
-    displayProductDetails(product);
-  }
+    console.log('Fetching product for barcode:', barcode); // Debug log
+    const product = await fetchProductByBarcode(barcode);
+    if (product) {
+      console.log('Product found:', product); // Debug log
+      displayProductDetails(product);
+    } else {
+      console.log('No product found'); // Debug log
+    }
+  });
+
+  document.getElementById('activateQuantityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const quantityToActivate = parseInt(document.getElementById('activateQuantity').value);
+    await activateProductQuantity(quantityToActivate);
+  });
+
+  document.getElementById('cancelActivation').addEventListener('click', hideProductDetails);
 });
-
-document.getElementById('activateQuantityForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const quantityToActivate = parseInt(document.getElementById('activateQuantity').value);
-  await activateProductQuantity(quantityToActivate);
-});
-
-document.getElementById('cancelActivation').addEventListener('click', hideProductDetails);

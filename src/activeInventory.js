@@ -1,6 +1,6 @@
 import './style.css'
 import JsBarcode from 'jsbarcode'
-import { supabase, deleteProduct as deleteProductFromDB, getProductBarcodes } from './database.js'
+import { supabase, deleteProduct as deleteProductFromDB, getProductBarcodes, getActiveProductBarcodes } from './database.js'
 
 let currentBarcode=null
 
@@ -82,7 +82,6 @@ async function loadInventory(){
         <td>${product.price}</td>
         <td>${totalPrice}</td>
         <td>${product.shelf_code || '-'}</td>
-        <td>${product.batch_count} batches</td>
         <td>${formattedDate}</td>
         <td>
           <button onclick="editProduct('${product.id}')">Edit</button>
@@ -115,13 +114,13 @@ window.editProduct=function(id){
   window.location.href=`edit.html?id=${id}`
 }
 
-// Show all barcodes for a product (aggregated view)
+// Show only active barcodes for a product (active inventory view)
 window.showProductBarcodes = async function(productId) {
   try {
-    const barcodes = await getProductBarcodes(productId);
+    const barcodes = await getActiveProductBarcodes(productId);
     
     if (barcodes.length === 0) {
-      alert('No barcodes found for this product.');
+      alert('No active barcodes found for this product.');
       return;
     }
     
@@ -156,7 +155,7 @@ window.showProductBarcodes = async function(productId) {
     modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
     
     modal.innerHTML = `
-      <h3>Product Barcodes</h3>
+      <h3>Active Product Barcodes</h3>
       <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${barcodeList}</pre>
       <div style="text-align: center; margin-top: 15px;">
         <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
