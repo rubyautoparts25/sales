@@ -1,4 +1,4 @@
-import { supabase } from './database.js'
+import { supabase, createProduct } from './database.js'
 
 let allProducts = []
 
@@ -12,7 +12,8 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     class: document.getElementById('class').value,
     brand: document.getElementById('brand').value.trim(),
     price: parseFloat(document.getElementById('price').value),
-    shelf_code: document.getElementById('shelfCode').value.trim()
+    shelf_code: document.getElementById('shelfCode').value.trim(),
+    min_stock: 20 // Default minimum stock
   }
   
   try {
@@ -33,14 +34,9 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     }
     
     
-    // Insert new product
-    const { data, error } = await supabase
-      .from('products')
-      .insert([formData])
-      .select()
-      .single()
-    
-    if (error) throw error
+    // Insert new product using the centralized createProduct function
+    // This will generate a barcode for the product
+    const data = await createProduct(formData, null) // barcode will be generated automatically
     
     showSuccess(`Product "${formData.part_name}" added successfully!`)
     clearForm()
@@ -57,7 +53,7 @@ async function loadExistingProducts() {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, part_name, variant, class, brand, price, shelf_code, created_at')
+      .select('id, part_name, variant, class, brand, price, shelf_code, barcode, created_at')
       .order('created_at', { ascending: false })
     
     if (error) {
@@ -89,6 +85,9 @@ function displayProducts(products) {
       <div class="product-name">${product.part_name} ${product.variant ? `(${product.variant})` : ''}</div>
       <div class="product-details">
         ${product.class} • ${product.brand} • ₹${product.price.toFixed(2)} ${product.shelf_code ? `• ${product.shelf_code}` : ''}
+      </div>
+      <div class="product-barcode" style="font-size: 0.8rem; color: #666; margin-top: 2px;">
+        Barcode: ${product.barcode || 'N/A'}
       </div>
     </div>
   `).join('')

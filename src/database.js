@@ -78,6 +78,9 @@ export async function getBatch(batchId) {
 
 // Product operations
 export async function createProduct(productDetails, barcode) {
+  // Generate a barcode if none provided
+  const productBarcode = barcode || await generateUniqueBarcode();
+  
   const { data, error } = await supabase
     .from('products')
     .insert([{
@@ -88,7 +91,7 @@ export async function createProduct(productDetails, barcode) {
       price: productDetails.price,
       shelf_code: productDetails.shelf_code,
       min_stock: productDetails.min_stock || 20,
-      barcode: barcode
+      barcode: productBarcode
     }])
     .select()
     .single();
