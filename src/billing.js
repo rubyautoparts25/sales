@@ -11,7 +11,9 @@ document.getElementById('customerForm').addEventListener('submit',e=>{
     name:document.getElementById('customerName').value.trim(),
     phone:document.getElementById('customerPhone').value.trim()
   }
-  document.getElementById('customerDisplay').textContent=`Customer: ${customer.name} (${customer.phone||''})`
+  const customerDisplay = document.getElementById('customerDisplay')
+  customerDisplay.innerHTML = `✅ <strong>${customer.name}</strong> ${customer.phone ? `(${customer.phone})` : ''}`
+  customerDisplay.style.display = 'block'
   billPrinted=false // Reset print flag when customer changes
 })
 

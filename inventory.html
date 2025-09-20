@@ -18,17 +18,10 @@
       }
     }
     
-    function logout() {
-      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
-      sessionStorage.removeItem('rubyAutoPartsUser');
-      window.location.href = 'login.html';
-    }
-    
     function resetBatch() {
       if (confirm("Are you sure you want to reset the current batch? This will clear the current batch session but keep all existing product batch information.")) {
         sessionStorage.removeItem('currentBatch');
         sessionStorage.removeItem('currentVendor');
-        // Don't clear batchTracking - this keeps the relationship between products and batches
         alert("Current batch reset successfully. All existing products will retain their batch information. You will now be redirected to create a new batch.");
         window.location.href = 'batch.html';
       }
@@ -223,14 +216,30 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
-  <div class="header">
-    <h1>🏢 Ruby Auto Parts - Inventory Manager</h1>
-    <div class="user-info">
-      <span>Welcome, <strong id="currentUser">admin</strong></span>
-      <button class="reset-btn" onclick="resetBatch()">Reset Batch</button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+  <!-- Navigation -->
+  <nav style="background: #2c3e50; color: white; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <h2 style="margin: 0; font-size: 1.2rem;">🏢 Ruby Auto Parts</h2>
+        <span style="font-size: 0.9rem; color: #bdc3c7;">Inventory Management</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
+        <button onclick="resetBatch()" style="background: #f39c12; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Reset Batch</button>
+        <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Logout</button>
+      </div>
     </div>
-  </div>
+    
+    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      <a href="inventory.html" style="background: #3498db; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📦 Inventory</a>
+      <a href="batch.html" style="background: #9b59b6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Batch Management</a>
+      <a href="active-inventory.html" style="background: #27ae60; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">✅ Active Stock</a>
+      <a href="onhold-inventory.html" style="background: #f39c12; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">⏸️ On-Hold Stock</a>
+      <a href="billing.html" style="background: #e67e22; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">💰 Billing</a>
+      <a href="activate.html" style="background: #1abc9c; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">🔄 Activate</a>
+      <a href="metrics.html" style="background: #8e44ad; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📊 Metrics</a>
+    </div>
+  </nav>
 
   <div id="batchIndicator" class="batch-indicator" style="display: none;">
     <div class="batch-info">
@@ -298,19 +307,14 @@
   <h2>Generated Barcode</h2>
   <svg id="barcode"></svg><br>
   <button id="downloadBarcode">Download Barcode</button>
-  <div class="navigation">
-    <h3>Quick Navigation</h3>
-    <div class="nav-buttons">
-      <button onclick="window.location.href='batch.html'">Batch Management</button>
-      <button onclick="window.location.href='active-inventory.html'">Active Inventory</button>
-      <button onclick="window.location.href='onhold-inventory.html'">On-Hold Inventory</button>
-      <button onclick="window.location.href='billing.html'">Go to Billing</button>
-      <button onclick="checkMetrics()">View Metrics</button>
-      <button onclick="window.location.href='activate.html'">Activate Products</button>
-    </div>
-  </div>
   
   <script>
+    function logout() {
+      sessionStorage.removeItem('rubyAutoPartsLoggedIn');
+      sessionStorage.removeItem('rubyAutoPartsUser');
+      window.location.href = 'login.html';
+    }
+    
     // Set current user
     document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
     

@@ -246,14 +246,30 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
-  <div class="header">
-    <h1>🏢 Ruby Auto Parts - Batch Management</h1>
-    <div class="user-info">
-      <span>Welcome, <strong id="currentUser">admin</strong></span>
-      <button class="reset-btn" onclick="resetBatch()">Reset Batch</button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+  <!-- Navigation -->
+  <nav style="background: #2c3e50; color: white; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <h2 style="margin: 0; font-size: 1.2rem;">🏢 Ruby Auto Parts</h2>
+        <span style="font-size: 0.9rem; color: #bdc3c7;">Batch Management</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
+        <button onclick="resetBatch()" style="background: #f39c12; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Reset Batch</button>
+        <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Logout</button>
+      </div>
     </div>
-  </div>
+    
+    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      <a href="inventory.html" style="background: #3498db; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📦 Inventory</a>
+      <a href="batch.html" style="background: #9b59b6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Batch Management</a>
+      <a href="active-inventory.html" style="background: #27ae60; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">✅ Active Stock</a>
+      <a href="onhold-inventory.html" style="background: #f39c12; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">⏸️ On-Hold Stock</a>
+      <a href="billing.html" style="background: #e67e22; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">💰 Billing</a>
+      <a href="activate.html" style="background: #1abc9c; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">🔄 Activate</a>
+      <a href="metrics.html" style="background: #8e44ad; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📊 Metrics</a>
+    </div>
+  </nav>
 
   <div id="batchInfo" class="batch-info" style="display: none;">
     <h3>Current Batch Information</h3>
