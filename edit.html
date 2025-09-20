@@ -70,13 +70,31 @@
   </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee;">
-    <h1 style="margin: 0;">🏢 Ruby Auto Parts - Edit Product</h1>
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <span style="color: #666; font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
-      <button onclick="logout()" style="background-color: #e74c3c; color: #fff; border: 1px solid #e74c3c; padding: 0.5rem 1rem; font-size: 0.9rem; cursor: pointer; border-radius: 4px;">Logout</button>
+  <!-- Navigation -->
+  <nav style="background: #2c3e50; color: white; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <h2 style="margin: 0; font-size: 1.2rem;">🏢 Ruby Auto Parts</h2>
+        <span style="font-size: 0.9rem; color: #bdc3c7;">Edit Product</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.9rem;">Welcome, <strong id="currentUser">admin</strong></span>
+        <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Logout</button>
+      </div>
     </div>
-  </div>
+    
+    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      <a href="inventory.html" style="background: #3498db; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📦 Add Inventory</a>
+      <a href="inventory-list.html" style="background: #2c3e50; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Inventory List</a>
+      <a href="batch.html" style="background: #9b59b6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📋 Batch Management</a>
+      <a href="active-inventory.html" style="background: #27ae60; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">✅ Active Stock</a>
+      <a href="onhold-inventory.html" style="background: #f39c12; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">⏸️ On-Hold Stock</a>
+      <a href="billing.html" style="background: #e67e22; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">💰 Billing</a>
+      <a href="activate.html" style="background: #1abc9c; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">🔄 Activate</a>
+      <a href="add-product.html" style="background: #17a2b8; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">➕ Add Product</a>
+      <a href="metrics.html" style="background: #8e44ad; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">📊 Metrics</a>
+    </div>
+  </nav>
   <form id="editForm">
     <label>Name</label>
     <input type="text" id="name">
