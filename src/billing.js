@@ -69,7 +69,7 @@ async function addScannedItem(code){
     // Get batch information
     const{data:batchData,error:batchError}=await supabase
       .from('batches')
-      .select('batch_id, vendor_name, batch_number')
+      .select('batch_id, vendor_name, vendor_invoice')
       .eq('id', inventoryData.batch_id)
       .single()
     
