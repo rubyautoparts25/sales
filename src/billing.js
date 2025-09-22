@@ -56,10 +56,10 @@ async function addScannedItem(code){
         batches!inner(batch_id, vendor_name, batch_number)
       `)
       .eq('barcode',code)
-      .gt('quantity_active', 0)
       .single()
     
-    if(error||!data){alert("Product not found or no active stock");return}
+    if(error||!data){alert("Product not found");return}
+    if(data.quantity_active <= 0){alert("No active stock available");return}
     
     const existingIndex=cart.findIndex(item=>item.barcode===code)
     if(existingIndex!==-1){
