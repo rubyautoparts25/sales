@@ -79,6 +79,16 @@
             border-color: #545b62;
         }
         
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
         .audit-results {
             margin-top: 1rem;
         }
@@ -236,10 +246,11 @@
                 <input type="text" id="barcodeInput" class="scan-input" placeholder="Scan or type barcode here..." autofocus>
                 <button id="scanBtn" class="btn btn-primary">Scan Item</button>
                 <button id="clearBtn" class="btn btn-secondary clear-btn">Clear All</button>
+                <button onclick="generatePDFReport()" class="btn btn-success">📄 Generate PDF Report</button>
             </div>
             <p style="color: #666; font-size: 14px; margin: 10px 0;">
-                💡 <strong>Instructions:</strong> Scan each item's barcode to verify it exists in the system. 
-                Items found will be marked as verified, missing items will be flagged for investigation.
+                💡 <strong>Instructions:</strong> Scan each item's barcode to count physical quantities. 
+                You can scan the same barcode multiple times to count multiple units. Generate PDF report when done.
             </p>
         </div>
         
