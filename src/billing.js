@@ -52,8 +52,8 @@ async function addScannedItem(code){
       .from('inventory')
       .select(`
         *,
-        products!inner(part_name, price),
-        batches!inner(batch_id, vendor_name, batch_number)
+        products(part_name, price),
+        batches(batch_id, vendor_name, batch_number)
       `)
       .eq('barcode',code)
       .single()
