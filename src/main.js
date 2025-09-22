@@ -13,7 +13,6 @@ import {
   supabase 
 } from './database.js'
 
-let currentBarcode=null
 
 function getCurrentBatchInfo(){
   const currentBatch = sessionStorage.getItem('currentBatch');
@@ -106,7 +105,6 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
     // Add inventory entry
     await addInventory(product.id, batchData.id, quantity, expiryDate);
     
-    renderBarcode(barcode);
     alert(`"${name}" added/updated in inventory.`);
     form.reset();
     loadInventory();
@@ -215,8 +213,7 @@ window.viewBarcode = async function(barcode) {
       return;
     }
     
-    // Generate and display the barcode
-    renderBarcode(barcode);
+    // Barcode is now generated and displayed in the modal
     
     // Show barcode details in a modal
     const modal = document.createElement('div');
@@ -319,15 +316,15 @@ window.printModalBarcode = async function(barcode) {
       ? new Date(barcodeInfo.batch_date).toISOString().slice(2, 10).replace(/-/g, '')
       : 'N/A';
     
-    const printContent = `
+  const printContent = `
       <div style="text-align:center;font-family:Arial,sans-serif;font-size:1px;">
         ${svg.outerHTML}
         <div style="margin-top:1px;font-size:12px;">₹${barcodeInfo.price}</div>
         <div style="margin-top:1px;font-size:12px;">${barcodeInfo.part_name}</div>
         <div style="margin-top:1px;font-size:10px;">${barcodeInfo.brand}</div>
         <div style="margin-top:1px;font-size:10px;">${batchDate}</div>
-      </div>
-    `;
+    </div>
+  `;
 
     const printWindow = window.open('', '', 'width=200,height=120');
     printWindow.document.write(`
@@ -346,9 +343,9 @@ window.printModalBarcode = async function(barcode) {
         </body>
       </html>
     `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
     
   } catch (error) {
     console.error('Error printing barcode:', error);
@@ -425,36 +422,7 @@ window.showProductBarcodes = async function(productId) {
   }
 }
 
-async function renderBarcode(barcode){
-  if(!barcode) return
-  JsBarcode("#barcode",barcode,{
-    format:"CODE128",
-    lineColor:"#000",
-    width:2,
-    height:40,
-    displayValue:true
-  })
-  currentBarcode=barcode
-  document.getElementById("downloadBarcode").style.display="inline-block"
-  // Print functionality moved to modal system
-
-  // Product details are now displayed in the modal when viewing barcodes
-  // No need to display inline product details anymore
-}
-window.renderBarcode=renderBarcode
-
-document.getElementById('downloadBarcode').addEventListener('click',()=>{
-  if(!currentBarcode) return alert("No barcode to download.")
-  const svg=document.getElementById('barcode')
-  const serializer=new XMLSerializer()
-  const svgBlob=new Blob([serializer.serializeToString(svg)],{type:"image/svg+xml;charset=utf-8"})
-  const url=URL.createObjectURL(svgBlob)
-  const a=document.createElement('a')
-  a.href=url
-  a.download=`barcode-${currentBarcode}.svg`
-  a.click()
-  URL.revokeObjectURL(url)
-})
+// Legacy barcode rendering removed - barcodes are now displayed in modals
 
 // Print functionality removed - users can print from the modal system;
 

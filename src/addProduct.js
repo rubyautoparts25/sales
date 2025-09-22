@@ -1,4 +1,4 @@
-import { supabase, createProduct, generateUniqueBarcode } from './database.js'
+import { supabase, createProduct } from './database.js'
 
 let allProducts = []
 
@@ -32,13 +32,13 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
       return
     }
     
-    // Generate unique barcode for the product
-    const barcode = await generateUniqueBarcode()
+    // Generate simple unused barcode for database constraint (real barcodes generated when adding inventory)
+    const unusedBarcode = `UNUSED-${Date.now().toString(36).toUpperCase()}`
     
     // Create product using the database function
-    const product = await createProduct(formData, barcode)
+    const product = await createProduct(formData, unusedBarcode)
     
-    showSuccess(`Product "${formData.part_name}" added successfully with barcode: ${barcode}`)
+    showSuccess(`Product "${formData.part_name}" added successfully!`)
     clearForm()
     loadExistingProducts() // Refresh the list
     
