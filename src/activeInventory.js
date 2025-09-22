@@ -2,11 +2,7 @@ import './style.css'
 import JsBarcode from 'jsbarcode'
 import { supabase, getProductBarcodes, getActiveProductBarcodes } from './database.js'
 
-let currentBarcode=null
-
-function generateBarcode(){
-  return Math.random().toString(36).substring(2,10).toUpperCase()
-}
+// Legacy barcode functions removed - barcodes are now displayed in modals
 
 window.filterInventory=function(){
   const query=document.getElementById('searchInput').value.toLowerCase()
@@ -17,34 +13,7 @@ window.filterInventory=function(){
   })
 }
 
-function renderBarcode(barcode){
-  currentBarcode=barcode
-  JsBarcode("#barcode", barcode, {
-    format: "CODE128",
-    width: 2,
-    height: 100,
-    displayValue: true
-  })
-}
-
-document.getElementById('downloadBarcode').addEventListener('click',()=>{
-  if(!currentBarcode) return
-  const svg=document.getElementById('barcode')
-  const svgData=new XMLSerializer().serializeToString(svg)
-  const canvas=document.createElement('canvas')
-  const ctx=canvas.getContext('2d')
-  const img=new Image()
-  img.onload=()=>{
-    canvas.width=img.width
-    canvas.height=img.height
-    ctx.drawImage(img,0,0)
-    const link=document.createElement('a')
-    link.download=`barcode_${currentBarcode}.png`
-    link.href=canvas.toDataURL()
-    link.click()
-  }
-  img.src='data:image/svg+xml;base64,'+btoa(svgData)
-})
+// Legacy barcode rendering and download removed - barcodes are now displayed in modals
 
 // Print functionality removed - users can print from the modal system
 
