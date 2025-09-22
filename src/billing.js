@@ -47,15 +47,25 @@ function addProductToCart(product){
 
 async function addScannedItem(code){
   try{
-    const{data,error}=await supabase.from('active_inventory').select('*').eq('barcode',code).single()
+    // Query batch_details to get the specific barcode's inventory info
+    const{data,error}=await supabase.from('batch_details').select('*').eq('barcode',code).single()
     if(error||!data){alert("Product not found or no active stock");return}
-    if(data.total_active<=0){alert("No active stock available");return}
-    const existingIndex=cart.findIndex(item=>item.id===data.id)
+    if(data.quantity_active<=0){alert("No active stock available");return}
+    
+    // Check if this barcode is already in cart
+    const existingIndex=cart.findIndex(item=>item.barcode===code)
     if(existingIndex!==-1){
-      if(cart[existingIndex].qty+1>data.total_active){alert("Not enough active stock");return}
+      if(cart[existingIndex].qty+1>data.quantity_active){alert("Not enough active stock");return}
       cart[existingIndex].qty+=1
     }else{
-      cart.push({id:data.id,name:data.part_name,price:data.price,qty:1,active:data.total_active})
+      cart.push({
+        barcode:code,
+        id:data.product_id,
+        name:data.part_name,
+        price:data.price,
+        qty:1,
+        active:data.quantity_active
+      })
     }
     renderCart()
     billPrinted=false // Reset print flag when cart changes
