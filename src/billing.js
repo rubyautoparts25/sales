@@ -47,40 +47,19 @@ function addProductToCart(product){
 
 async function addScannedItem(code){
   try{
-    // Query inventory table directly for items with active stock
-    const{data:inventoryData,error:inventoryError}=await supabase
+    // Single query to get all data by barcode
+    const{data,error}=await supabase
       .from('inventory')
-      .select('*')
+      .select(`
+        *,
+        products(part_name, price),
+        batches(batch_id, vendor_name, vendor_invoice)
+      `)
       .eq('barcode',code)
       .single()
     
-    if(inventoryError||!inventoryData){alert("Product not found");return}
-    if(inventoryData.quantity_active <= 0){alert("No active stock available");return}
-    
-    // Get product information
-    const{data:productData,error:productError}=await supabase
-      .from('products')
-      .select('part_name, price')
-      .eq('id', inventoryData.product_id)
-      .single()
-    
-    if(productError||!productData){alert("Product details not found");return}
-    
-    // Get batch information
-    const{data:batchData,error:batchError}=await supabase
-      .from('batches')
-      .select('batch_id, vendor_name, vendor_invoice')
-      .eq('id', inventoryData.batch_id)
-      .single()
-    
-    if(batchError||!batchData){alert("Batch details not found");return}
-    
-    // Combine the data
-    const data = {
-      ...inventoryData,
-      products: productData,
-      batches: batchData
-    }
+    if(error||!data){alert("Product not found");return}
+    if(data.quantity_active <= 0){alert("No active stock available");return}
     
     const existingIndex=cart.findIndex(item=>item.barcode===code)
     if(existingIndex!==-1){
