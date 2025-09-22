@@ -47,24 +47,32 @@ function addProductToCart(product){
 
 async function addScannedItem(code){
   try{
-    // Query batch_details to get the specific barcode's inventory info
-    const{data,error}=await supabase.from('batch_details').select('*').eq('barcode',code).single()
-    if(error||!data){alert("Product not found or no active stock");return}
-    if(data.quantity_active<=0){alert("No active stock available");return}
+    // Query inventory table directly for items with active stock
+    const{data,error}=await supabase
+      .from('inventory')
+      .select(`
+        *,
+        products!inner(part_name, price),
+        batches!inner(batch_id, vendor_name, batch_number)
+      `)
+      .eq('barcode',code)
+      .gt('quantity_active', 0)
+      .single()
     
-    // Check if this barcode is already in cart
+    if(error||!data){alert("Product not found or no active stock");return}
+    
     const existingIndex=cart.findIndex(item=>item.barcode===code)
     if(existingIndex!==-1){
       if(cart[existingIndex].qty+1>data.quantity_active){alert("Not enough active stock");return}
       cart[existingIndex].qty+=1
     }else{
       cart.push({
-        barcode:code,
-        id:data.product_id,
-        name:data.part_name,
-        price:data.price,
-        qty:1,
-        active:data.quantity_active
+        barcode: data.barcode,
+        name: data.products.part_name,
+        price: data.products.price,
+        qty: 1,
+        active: data.quantity_active,
+        batch_id: data.batch_id
       })
     }
     renderCart()
@@ -132,9 +140,21 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
     if(billErr)throw billErr
     
     for(const item of cart){
+      // Get product_id from barcode
+      const{data:productData,error:productError}=await supabase
+        .from('inventory')
+        .select('product_id')
+        .eq('barcode',item.barcode)
+        .single()
+      
+      if(productError){
+        console.error("Product lookup error:",productError)
+        continue
+      }
+      
       // Create sale record
       const{error:saleError}=await supabase.from("sales").insert({
-        product_id:item.id,
+        product_id:productData.product_id,
         quantity_sold:item.qty,
         bill_id:bill.id,
         price_at_sale:item.price
@@ -143,7 +163,7 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
       
       // Use the database function to sell inventory (FIFO)
       const{error:sellError}=await supabase.rpc('sell_inventory', {
-        p_product_id: item.id,
+        p_product_id: productData.product_id,
         p_quantity: item.qty,
         p_price: item.price,
         p_bill_id: bill.id
