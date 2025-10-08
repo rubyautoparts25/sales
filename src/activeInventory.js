@@ -19,7 +19,7 @@ window.filterInventory=function(){
 
 async function loadInventory(){
   try {
-    const { data, error } = await supabase.from('active_inventory').select('*');
+    const { data, error } = await supabase().from('active_inventory').select('*');
     if (error) {
       console.error("Error loading inventory:", error);
       return;

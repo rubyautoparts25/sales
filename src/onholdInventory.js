@@ -88,7 +88,7 @@ window.deleteInventoryItem = async function(barcode) {
   if (!confirm('Are you sure you want to delete this inventory item?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('inventory')
       .delete()
       .eq('barcode', barcode);
@@ -181,7 +181,7 @@ window.viewBarcode = async function(barcode) {
 async function loadInventory(){
   try {
     // Load unaggregated on-hold inventory (individual batch items)
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('batch_details')
       .select('*')
       .gt('quantity_on_hold', 0)

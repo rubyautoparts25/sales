@@ -110,14 +110,21 @@ document.getElementById('productForm').addEventListener('submit', async e=>{
     loadInventory();
   } catch (err) {
     console.error("Insert error:", err);
-    alert("Something went wrong while adding the product: " + err.message);
+    console.error("Error details:", {
+      message: err.message,
+      code: err.code,
+      details: err.details,
+      hint: err.hint,
+      stack: err.stack
+    });
+    alert("Something went wrong while adding the product: " + err.message + "\n\nCheck console for more details.");
   }
 })
 
 async function loadInventory(){
   try {
     // Load unaggregated inventory (individual batch items)
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('batch_details')
       .select('*')
       .order('batch_date', { ascending: false })
@@ -188,7 +195,7 @@ window.deleteInventoryItem = async function(inventoryId) {
   if (!confirm("Are you sure you want to delete this inventory item?")) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('inventory')
       .delete()
       .eq('id', inventoryId);
@@ -461,7 +468,7 @@ nameInput.addEventListener('input',async()=>{
 
   try {
     // Use a more specific query to get unique products
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('products')
       .select('part_name, variant, class, brand, price, shelf_code')
       .or(`part_name.ilike.%${query}%,variant.ilike.%${query}%`)

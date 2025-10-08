@@ -16,7 +16,7 @@ window.addEventListener('DOMContentLoaded', function() {
 async function fetchProductByBarcode(barcode) {
   try {
     // Query the inventory table with barcode to get product and batch details
-    const { data: inventoryData, error: inventoryError } = await supabase
+    const { data: inventoryData, error: inventoryError } = await supabase()
       .from('inventory')
       .select(`
         barcode,
@@ -122,7 +122,7 @@ async function activateProductQuantity(quantityToActivate) {
   try {
     // Use the database function to activate inventory
     // We need to get the batch ID for the specific barcode
-    const { data: inventoryData, error: inventoryError } = await supabase
+    const { data: inventoryData, error: inventoryError } = await supabase()
       .from('inventory')
       .select('batch_id')
       .eq('barcode', currentProduct.barcode)
@@ -133,7 +133,7 @@ async function activateProductQuantity(quantityToActivate) {
       return;
     }
 
-    const { data, error } = await supabase.rpc('activate_inventory', {
+    const { data, error } = await supabase().rpc('activate_inventory', {
       p_product_id: currentProduct.id,
       p_quantity: quantityToActivate,
       p_batch_id: inventoryData.batch_id

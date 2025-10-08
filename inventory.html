@@ -206,6 +206,38 @@
       background-color: #45a049;
       border-color: #45a049;
     }
+    .no-batch-warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .warning-content h3 {
+      color: #856404;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    .warning-content p {
+      color: #856404;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .create-batch-btn {
+      background-color: #28a745;
+      color: white;
+      border: 1px solid #28a745;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .create-batch-btn:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -247,7 +279,16 @@
     <button onclick="window.location.href='batch.html'" class="manage-batch-btn">Manage Batch</button>
   </div>
 
-  <form id="productForm">
+  <div id="noBatchWarning" class="no-batch-warning" style="display: none;">
+    <div class="warning-content">
+      <h3>⚠️ No Active Batch</h3>
+      <p>You must create a batch first before adding inventory items.</p>
+      <p>This ensures proper tracking of vendor information and batch management.</p>
+      <button onclick="window.location.href='batch.html'" class="create-batch-btn">Create New Batch</button>
+    </div>
+  </div>
+
+  <form id="productForm" style="display: none;">
     <div class="form-row">
       <input type="text" id="name" placeholder="Part Name" required>
       <input type="text" id="variant" placeholder="Variant" required>
@@ -297,6 +338,13 @@
       document.getElementById('currentVendorDisplay').textContent = batchData.vendorName;
       document.getElementById('currentInvoiceDisplay').textContent = batchData.invoiceNumber;
       document.getElementById('batchIndicator').style.display = 'block';
+      document.getElementById('productForm').style.display = 'block';
+      document.getElementById('noBatchWarning').style.display = 'none';
+    } else {
+      // No batch exists - show warning and hide form
+      document.getElementById('noBatchWarning').style.display = 'block';
+      document.getElementById('productForm').style.display = 'none';
+      document.getElementById('batchIndicator').style.display = 'none';
     }
   </script>
   <script type="module" src="src/main.js"></script>

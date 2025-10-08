@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Connection Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test Supabase connection with the exact same config
+        const supabaseUrl = 'https://aknhtapidbkwksvjsqsu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE';
+        
+        console.log('Testing with URL:', supabaseUrl);
+        console.log('Testing with Key:', supabaseKey.substring(0, 20) + '...');
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Test basic connection by trying to access a table
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <h2 style="color: red;">❌ Connection Failed</h2>
+                        <p><strong>Error Code:</strong> ${error.code}</p>
+                        <p><strong>Error Message:</strong> ${error.message}</p>
+                        <p><strong>Error Details:</strong> ${JSON.stringify(error, null, 2)}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h2 style="color: green;">✅ Connection Successful!</h2>
+                        <p>Supabase is working correctly.</p>
+                        <p><strong>Response:</strong> ${JSON.stringify(data, null, 2)}</p>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <h2 style="color: red;">❌ Connection Error</h2>
+                    <p><strong>Error:</strong> ${err.message}</p>
+                    <p><strong>Stack:</strong> ${err.stack}</p>
+                `;
+            }
+        }
+        
+        // Run test when page loads
+        testConnection();
+    </script>
+</body>
+</html>

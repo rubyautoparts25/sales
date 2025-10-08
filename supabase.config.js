@@ -34,8 +34,14 @@ export const supabaseConfig = {
 
 // Get Supabase configuration from environment variables with fallbacks
 export const getSupabaseConfig = () => {
-  return {
+  const config = {
     url: import.meta.env.VITE_SUPABASE_URL || supabaseConfig.url,
     anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || supabaseConfig.anonKey
   };
+  console.log('Supabase config:', config);
+  console.log('Environment variables:', {
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY
+  });
+  return config;
 };

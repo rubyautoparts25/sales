@@ -241,8 +241,111 @@
       border-color: #6c757d;
       cursor: not-allowed;
     }
+    .workflow-info {
+      border: 1px solid #2196f3;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .workflow-info p {
+      margin: 0.5rem 0;
+      color: #1976d2;
+      font-size: 0.95rem;
+    }
+    .workflow-info p:first-child {
+      font-weight: 600;
+    }
+    
+    .batch-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .refresh-btn, .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    .refresh-btn:hover, .toggle-btn:hover {
+      background: #2980b9;
+    }
+    
+    .batches-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+    
+    .batch-item {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .batch-item:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .batch-item:last-child {
+      border-bottom: none;
+    }
+    
+    .batch-item.active {
+      background-color: #e8f5e8;
+      border-left: 4px solid #27ae60;
+    }
+    
+    .batch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .batch-id {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    .batch-date {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .batch-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    
+    .batch-details.hidden {
+      display: none;
+    }
+    
+    .loading-message {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .empty-message {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
@@ -296,17 +399,6 @@
     </div>
   </div>
 
-  <div id="newBatchForm" class="form-section">
-    <h2>Create New Batch</h2>
-    <form id="batchForm">
-      <div class="form-row">
-        <input type="text" id="vendorName" placeholder="Vendor Name" required>
-        <input type="text" id="invoiceNumber" placeholder="Invoice Number" required>
-      </div>
-      <button type="submit">Create New Batch</button>
-    </form>
-  </div>
-
   <div class="search-section">
     <h3>Search Vendor Details</h3>
     <p>Scan or enter barcode to search for vendor information:</p>
@@ -315,6 +407,32 @@
       <button id="searchBtn" class="search-btn">Search</button>
     </div>
     <div id="vendorResults"></div>
+  </div>
+
+  <div class="section">
+    <h2>Existing Batches</h2>
+    <div class="batch-controls">
+      <button id="refreshBatchesBtn" class="refresh-btn">🔄 Refresh List</button>
+      <button id="toggleBatchViewBtn" class="toggle-btn">📋 Show Details</button>
+    </div>
+    <div id="batchesList" class="batches-list">
+      <div class="loading-message">Loading batches...</div>
+    </div>
+  </div>
+
+  <div id="newBatchForm" class="form-section">
+    <h2>Create New Batch</h2>
+    <div class="workflow-info">
+      <p><strong>📋 New Workflow:</strong> Create a batch first, then add inventory items to it.</p>
+      <p>This ensures proper tracking of vendor information and batch management.</p>
+    </div>
+    <form id="batchForm">
+      <div class="form-row">
+        <input type="text" id="vendorName" placeholder="Vendor Name" required>
+        <input type="text" id="invoiceNumber" placeholder="Invoice Number" required>
+      </div>
+      <button type="submit">Create New Batch</button>
+    </form>
   </div>
 
   <div class="navigation">
@@ -328,14 +446,10 @@
   </div>
   
   <script type="module">
-    // Wait for DOM and Supabase to load
+    import { supabase } from './src/database.js'
+    
+    // Wait for DOM to load
     function initializeApp() {
-      if (typeof supabase === 'undefined') {
-        // If Supabase is not loaded yet, wait a bit and try again
-        setTimeout(initializeApp, 100);
-        return;
-      }
-      
       // Set current user
       document.getElementById('currentUser').textContent = sessionStorage.getItem('rubyAutoPartsUser') || 'admin';
 
@@ -344,15 +458,16 @@
       if (currentBatch) {
         displayBatchInfo(JSON.parse(currentBatch));
       }
-
-      // Initialize Supabase
-      const supabaseClient = supabase.createClient(
-        import.meta.env.VITE_SUPABASE_URL || 'https://aknhtapidbkwksvjsqsu.supabase.co',
-        import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE'
-      );
+      
+      // Load existing batches
+      loadBatches();
+      
+      // Add event listeners for batch controls
+      document.getElementById('refreshBatchesBtn').addEventListener('click', loadBatches);
+      document.getElementById('toggleBatchViewBtn').addEventListener('click', toggleBatchDetails);
 
     // Create new batch
-    document.getElementById('batchForm').addEventListener('submit', function(e) {
+    document.getElementById('batchForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const vendorName = document.getElementById('vendorName').value.trim();
@@ -363,38 +478,62 @@
         return;
       }
 
-      const timestamp = new Date().toISOString();
-      const batchId = `${invoiceNumber}-${vendorName}-${timestamp}`;
-      
-      const batchData = {
-        batchId: batchId,
-        vendorName: vendorName,
-        invoiceNumber: invoiceNumber,
-        timestamp: timestamp,
-        created: new Date().toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      };
+      try {
+        // Create batch in database
+        const now = new Date();
+        const { data: newBatch, error } = await supabase()
+          .from('batches')
+          .insert([{
+            batch_id: `${invoiceNumber}-${vendorName}-${Date.now()}`,
+            batch_date: now.toISOString().split('T')[0],
+            batch_time: now.toTimeString().split(' ')[0],
+            vendor_name: vendorName,
+            vendor_invoice: invoiceNumber,
+            created_by: sessionStorage.getItem('rubyAutoPartsUser') || 'admin'
+          }])
+          .select()
+          .single();
 
-      // Store batch in session storage
-      sessionStorage.setItem('currentBatch', JSON.stringify(batchData));
-      sessionStorage.setItem('currentVendor', JSON.stringify({
-        name: vendorName,
-        invoiceNumber: invoiceNumber
-      }));
+        if (error) throw error;
 
-      displayBatchInfo(batchData);
-      alert(`Batch created successfully!\nBatch ID: ${batchId}\n\nYou will now be redirected to add stock items for this vendor.`);
-      
-      // Navigate to inventory page after a short delay
-      setTimeout(() => {
-        window.location.href = 'inventory.html';
-      }, 2000);
+        const batchData = {
+          id: newBatch.id,
+          batchId: newBatch.batch_id,
+          vendorName: newBatch.vendor_name,
+          invoiceNumber: newBatch.vendor_invoice,
+          timestamp: newBatch.created_at,
+          created: new Date(newBatch.created_at).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+
+        // Store batch in session storage
+        sessionStorage.setItem('currentBatch', JSON.stringify(batchData));
+        sessionStorage.setItem('currentVendor', JSON.stringify({
+          name: vendorName,
+          invoiceNumber: invoiceNumber
+        }));
+
+        displayBatchInfo(batchData);
+        
+        // Refresh the batches list
+        loadBatches();
+        
+        // Clear the form
+        document.getElementById('vendorName').value = '';
+        document.getElementById('invoiceNumber').value = '';
+        
+        alert(`Batch created successfully!\nBatch ID: ${batchData.batchId}\n\nYou can now add stock items for this vendor.`);
+        
+      } catch (error) {
+        console.error('Error creating batch:', error);
+        alert('Error creating batch. Please try again.');
+      }
     });
 
     function displayBatchInfo(batchData) {
@@ -419,9 +558,26 @@
 
       try {
         // Search for inventory items with matching barcode
-        const { data, error } = await supabaseClient
-          .from('batch_details')
-          .select('*')
+        const { data, error } = await supabase()
+          .from('inventory')
+          .select(`
+            barcode,
+            quantity_active,
+            quantity_on_hold,
+            products!inner(
+              part_name,
+              variant,
+              brand,
+              class,
+              price
+            ),
+            batches!inner(
+              batch_id,
+              batch_date,
+              vendor_name,
+              vendor_invoice
+            )
+          `)
           .eq('barcode', query)
           .limit(10);
           
@@ -449,9 +605,11 @@
           resultsDiv.appendChild(summaryDiv);
           
           data.forEach(item => {
-            // Get vendor info from batch_details data
-            let vendorInfo = item.vendor_name || '';
-            let batchInfo = item.batch_number || '';
+            // Get vendor info from nested data structure
+            const product = item.products;
+            const batch = item.batches;
+            let vendorInfo = batch?.vendor_name || '';
+            let batchInfo = batch?.batch_id || '';
             
             // Try localStorage first (persistent), then sessionStorage for additional tracking
             let batchTracking = localStorage.getItem('batchTracking');
@@ -481,11 +639,12 @@
 
             // Format the date properly
             let formattedDate = 'Unknown';
-            console.log('Item date_added:', item.date_added, 'Type:', typeof item.date_added);
+            const dateToUse = batch?.batch_date || item.created_at;
+            console.log('Item date:', dateToUse, 'Type:', typeof dateToUse);
             
-            if (item.date_added) {
+            if (dateToUse) {
               try {
-                const date = new Date(item.date_added);
+                const date = new Date(dateToUse);
                 console.log('Parsed date:', date, 'Is valid:', !isNaN(date.getTime()));
                 if (!isNaN(date.getTime())) {
                   formattedDate = date.toLocaleString('en-IN', {
@@ -497,7 +656,7 @@
                   console.log('Formatted date:', formattedDate);
                 } else {
                   // Try alternative date parsing
-                  const altDate = new Date(item.date_added + 'T00:00:00');
+                  const altDate = new Date(dateToUse + 'T00:00:00');
                   if (!isNaN(altDate.getTime())) {
                     formattedDate = altDate.toLocaleString('en-IN', {
                       timeZone: 'Asia/Kolkata',
@@ -509,11 +668,11 @@
                   }
                 }
               } catch (error) {
-                console.log('Date formatting error:', error, 'Raw date:', item.date_added);
-                formattedDate = item.date_added || 'Invalid date'; // Show raw value if formatting fails
+                console.log('Date formatting error:', error, 'Raw date:', dateToUse);
+                formattedDate = dateToUse || 'Invalid date'; // Show raw value if formatting fails
               }
             } else {
-              console.log('No date_added field found for item:', item.part_name);
+              console.log('No date field found for item:', product?.part_name);
               // Fallback to current date if no date is available
               formattedDate = new Date().toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata',
@@ -526,11 +685,11 @@
             const vendorDiv = document.createElement('div');
             vendorDiv.className = 'vendor-item';
             vendorDiv.innerHTML = `
-              <div class="vendor-name">${item.part_name} (${item.variant || ''})</div>
+              <div class="vendor-name">${product?.part_name || 'Unknown Product'} (${product?.variant || ''})</div>
               <div class="vendor-details">
-                <strong>Brand:</strong> ${item.brand} | 
-                <strong>Class:</strong> ${item.class || '-'} | 
-                <strong>Price:</strong> ₹${item.price} | 
+                <strong>Brand:</strong> ${product?.brand || 'Unknown'} | 
+                <strong>Class:</strong> ${product?.class || '-'} | 
+                <strong>Price:</strong> ₹${product?.price || '0'} | 
                 <strong>Qty:</strong> ${(item.quantity_on_hold + item.quantity_active)}
                 <br><strong>Barcode:</strong> ${item.barcode}
                 ${vendorInfo ? `<br><strong>Vendor:</strong> ${vendorInfo}` : '<br><strong>Vendor:</strong> Not available'}
@@ -591,6 +750,123 @@
       }
     });
     } // End of initializeApp function
+    
+    // Load existing batches from database
+    async function loadBatches() {
+      const batchesList = document.getElementById('batchesList');
+      batchesList.innerHTML = '<div class="loading-message">Loading batches...</div>';
+      
+      try {
+        const { data: batches, error } = await supabase()
+          .from('batches')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (!batches || batches.length === 0) {
+          batchesList.innerHTML = '<div class="empty-message">No batches found. Create your first batch above!</div>';
+          return;
+        }
+        
+        // Get current batch for highlighting
+        const currentBatch = sessionStorage.getItem('currentBatch');
+        const currentBatchId = currentBatch ? JSON.parse(currentBatch).id : null;
+        
+        batchesList.innerHTML = batches.map(batch => {
+          const isActive = currentBatchId === batch.id;
+          const createdDate = new Date(batch.created_at).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          return `
+            <div class="batch-item ${isActive ? 'active' : ''}" data-batch-id="${batch.id}">
+              <div class="batch-header">
+                <div class="batch-id">Batch #${batch.batch_id}</div>
+                <div class="batch-date">${createdDate}</div>
+              </div>
+              <div class="batch-details hidden">
+                <div><strong>Vendor:</strong> ${batch.vendor_name || 'Not specified'}</div>
+                <div><strong>Invoice:</strong> ${batch.vendor_invoice || 'Not specified'}</div>
+                <div><strong>Status:</strong> ${isActive ? 'Active' : 'Inactive'}</div>
+                <div><strong>ID:</strong> ${batch.id}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        // Add click handlers for batch items
+        document.querySelectorAll('.batch-item').forEach(item => {
+          item.addEventListener('click', () => selectBatch(item.dataset.batchId));
+        });
+        
+      } catch (error) {
+        console.error('Error loading batches:', error);
+        batchesList.innerHTML = '<div class="empty-message">Error loading batches. Please try again.</div>';
+      }
+    }
+    
+    // Toggle batch details visibility
+    function toggleBatchDetails() {
+      const details = document.querySelectorAll('.batch-details');
+      const button = document.getElementById('toggleBatchViewBtn');
+      
+      const isHidden = details[0]?.classList.contains('hidden');
+      
+      details.forEach(detail => {
+        if (isHidden) {
+          detail.classList.remove('hidden');
+        } else {
+          detail.classList.add('hidden');
+        }
+      });
+      
+      button.textContent = isHidden ? '📋 Hide Details' : '📋 Show Details';
+    }
+    
+    // Select a batch and set it as current
+    async function selectBatch(batchId) {
+      try {
+        const { data: batch, error } = await supabase()
+          .from('batches')
+          .select('*')
+          .eq('id', batchId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (batch) {
+          // Set as current batch
+          const batchInfo = {
+            id: batch.id,
+            batchId: batch.batch_id,
+            vendorName: batch.vendor_name,
+            invoiceNumber: batch.vendor_invoice,
+            createdAt: batch.created_at
+          };
+          
+          sessionStorage.setItem('currentBatch', JSON.stringify(batchInfo));
+          displayBatchInfo(batchInfo);
+          
+          // Update UI
+          document.querySelectorAll('.batch-item').forEach(item => {
+            item.classList.remove('active');
+          });
+          document.querySelector(`[data-batch-id="${batchId}"]`).classList.add('active');
+          
+          // Enable add stock button
+          document.getElementById('addStockBtn').disabled = false;
+        }
+      } catch (error) {
+        console.error('Error selecting batch:', error);
+        alert('Error selecting batch. Please try again.');
+      }
+    }
     
     // Start the app when DOM is ready
     document.addEventListener('DOMContentLoaded', initializeApp);

@@ -17,7 +17,7 @@ async function loadInventory() {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()()
       .from('batch_details')
       .select('*')
       .order('created_at', { ascending: false })
@@ -125,7 +125,7 @@ function filterInventory() {
 // View barcode details
 async function viewBarcode(barcode) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('inventory')
       .select(`
         barcode,
@@ -315,7 +315,7 @@ async function deleteInventoryItem(barcode) {
   }
   
   try {
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('inventory')
       .delete()
       .eq('barcode', barcode)

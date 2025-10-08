@@ -177,29 +177,27 @@
 </div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-const db = createClient(
-  import.meta.env.VITE_SUPABASE_URL || 'https://aknhtapidbkwksvjsqsu.supabase.co',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE'
-)
+import { supabase } from './src/database.js'
 
 let salesChartInstance, topChartInstance
 
 async function loadKPIs() {
-  const { data: products } = await db.from('products').select('*')
-  const { data: bills } = await db.from('bills').select('*')
-  const { data: inventory } = await db.from('inventory').select('quantity_active, quantity_on_hold')
+  const { data: products } = await supabase().from('products').select('*')
+  const { data: sales, error: salesError } = await supabase().from('sales').select('price_at_sale, quantity_sold')
+  const { data: inventory } = await supabase().from('inventory').select('quantity_active, quantity_on_hold')
+  
+  console.log('Sales data:', sales)
+  console.log('Sales error:', salesError)
   
   document.getElementById('totalProducts').textContent = products.length
   document.getElementById('activeStock').textContent = inventory.reduce((sum,i)=>sum+(i.quantity_active||0),0)
   document.getElementById('holdStock').textContent = inventory.reduce((sum,i)=>sum+(i.quantity_on_hold||0),0)
-  document.getElementById('totalRevenue').textContent = '₹'+bills.reduce((sum,b)=>sum+(b.total_amount||0),0).toFixed(2)
-  document.getElementById('totalBills').textContent = bills.length
+  document.getElementById('totalRevenue').textContent = '₹'+sales.reduce((sum,s)=>sum+(s.price_at_sale * s.quantity_sold||0),0).toFixed(2)
+  document.getElementById('totalBills').textContent = sales.length
 }
 
 async function loadInventory() {
-  const { data: inventory } = await db.from('inventory_summary').select('*')
+  const { data: inventory } = await supabase().from('inventory_summary').select('*')
   const tbody = document.querySelector('#inventoryTable tbody')
   tbody.innerHTML = ''
   inventory.forEach(item=>{
@@ -223,9 +221,9 @@ async function loadInventory() {
 window.deleteProduct = async (id)=>{
   if(!confirm("Delete product and all its inventory?")) return
   // Delete from inventory first (due to foreign key constraints)
-  await db.from('inventory').delete().eq('product_id',id)
+  await supabase().from('inventory').delete().eq('product_id',id)
   // Then delete the product
-  await db.from('products').delete().eq('id',id)
+  await supabase().from('products').delete().eq('id',id)
   loadInventory()
   loadKPIs()
 }
@@ -237,11 +235,12 @@ async function loadSales(period){
   if(period==='weekly') from=new Date(now.getFullYear(),now.getMonth(),now.getDate()-7)
   if(period==='monthly') from=new Date(now.getFullYear(),now.getMonth()-1,now.getDate())
   if(period==='yearly') from=new Date(now.getFullYear()-1,now.getMonth(),now.getDate())
-  const { data: bills } = await db.from('bills').select('*').gte('created_at',from.toISOString())
+  const { data: sales } = await supabase().from('sales').select('price_at_sale, quantity_sold, created_at').gte('created_at',from.toISOString())
   const dailyTotals = {}
-  bills.forEach(b=>{
-    const d = new Date(b.created_at).toLocaleDateString('en-IN')
-    dailyTotals[d] = (dailyTotals[d]||0) + b.total_amount
+  sales.forEach(s=>{
+    const d = new Date(s.created_at).toLocaleDateString('en-IN')
+    const saleAmount = s.price_at_sale * s.quantity_sold
+    dailyTotals[d] = (dailyTotals[d]||0) + saleAmount
   })
   const labels = Object.keys(dailyTotals)
   const values = Object.values(dailyTotals)
@@ -253,11 +252,11 @@ async function loadSales(period){
 }
 
 async function loadTopSelling() {
-  const { data: sales } = await db.from('sales').select('product_id,quantity_sold')
+  const { data: sales } = await supabase().from('sales').select('product_id,quantity_sold')
   const tally = {}
   sales.forEach(s=>{ tally[s.product_id] = (tally[s.product_id]||0) + s.quantity_sold })
   const ids = Object.keys(tally)
-  const { data: products } = await db.from('products').select('id,part_name,variant')
+  const { data: products } = await supabase().from('products').select('id,part_name,variant')
   const labels = []
   const values = []
   ids.forEach(id=>{
@@ -274,26 +273,46 @@ async function loadTopSelling() {
 
 
 async function loadCustomers() {
-  const { data: bills } = await db.from('bills').select('customer_phone')
+  // Get customer data directly from bills table
+  const { data: bills } = await supabase().from('bills').select('customer_phone')
   const countMap = {}
-  bills.forEach(b=>{
-    const phone = b.customer_phone||'Unknown'
-    countMap[phone] = (countMap[phone]||0) + 1
+  bills.forEach(bill => {
+    const phone = bill.customer_phone || 'Unknown'
+    countMap[phone] = (countMap[phone] || 0) + 1
   })
-  const sorted = Object.entries(countMap).sort((a,b)=>b[1]-a[1])
-  document.getElementById('customerStats').innerHTML = `<h3>Customer Visits</h3><ul>${sorted.map(([phone,count])=>`<li>${phone} – ${count} visits</li>`).join('')}</ul>`
+  const sorted = Object.entries(countMap).sort((a,b) => b[1] - a[1])
+  document.getElementById('customerStats').innerHTML = `<h3>Customer Visits</h3><ul>${sorted.map(([phone,count]) => `<li>${phone} – ${count} visits</li>`).join('')}</ul>`
 }
 
 async function loadRecent() {
-  const { data: bills } = await db.from('bills').select('*').order('created_at',{ascending:false}).limit(10)
+  // First, get recent bills directly from the bills table
+  const { data: bills, error: billsError } = await supabase()
+    .from('bills')
+    .select('*')
+    .order('created_at', {ascending: false})
+    .limit(10)
+  
+  console.log('Recent bills data:', bills)
+  console.log('Recent bills error:', billsError)
+  
   const tbody = document.querySelector('#billsTable tbody')
   tbody.innerHTML = ''
-  bills.forEach(b=>{
-    const date = new Date(b.created_at).toLocaleString('en-IN')
-    const row = document.createElement('tr')
-    row.innerHTML = `<td>${b.id}</td><td>${b.customer_name} (${b.customer_phone||'-'})</td><td>₹${b.total_amount}</td><td>${date}</td>`
-    tbody.appendChild(row)
-  })
+  
+  if (bills && bills.length > 0) {
+    bills.forEach(bill => {
+      const date = new Date(bill.created_at).toLocaleString('en-IN')
+      const row = document.createElement('tr')
+      row.innerHTML = `
+        <td>${bill.id}</td>
+        <td>${bill.customer_name || 'Unknown'} (${bill.customer_phone || '-'})</td>
+        <td>₹${bill.total_amount?.toFixed(2) || '0.00'}</td>
+        <td>${date}</td>
+      `
+      tbody.appendChild(row)
+    })
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">No recent bills found</td></tr>'
+  }
 }
 
 document.querySelectorAll('.trend-buttons button').forEach(btn=>{

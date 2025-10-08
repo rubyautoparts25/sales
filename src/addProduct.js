@@ -17,7 +17,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
   
   try {
     // Check if product already exists
-    const { data: existingProducts, error: checkError } = await supabase
+    const { data: existingProducts, error: checkError } = await supabase()
       .from('products')
       .select('id')
       .eq('part_name', formData.part_name)
@@ -51,7 +51,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
 // Load existing products
 async function loadExistingProducts() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('products')
       .select('id, part_name, variant, class, brand, price, shelf_code, created_at')
       .order('created_at', { ascending: false })

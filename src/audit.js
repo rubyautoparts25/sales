@@ -68,6 +68,8 @@ async function handleScan() {
         if (barcodeInfo && barcodeInfo.length > 0) {
             // Item found in database
             const item = barcodeInfo[0]
+            const product = item.products
+            const batch = item.batches
             const totalQuantity = item.quantity_active + item.quantity_on_hold
             const scannedCount = scannedCounts.get(barcode)
             
@@ -78,16 +80,16 @@ async function handleScan() {
                 scannedCount: scannedCount,
                 databaseQuantity: totalQuantity,
                 item: {
-                    part_name: item.part_name,
-                    variant: item.variant,
-                    brand: item.brand,
-                    class: item.class,
-                    price: item.price,
+                    part_name: product.part_name,
+                    variant: product.variant,
+                    brand: product.brand,
+                    class: product.class,
+                    price: product.price,
                     quantity_active: item.quantity_active,
                     quantity_on_hold: item.quantity_on_hold,
-                    batch_number: item.batch_number,
-                    vendor_name: item.vendor_name,
-                    batch_date: item.batch_date
+                    batch_number: batch.batch_id,
+                    vendor_name: batch.vendor_name,
+                    batch_date: batch.batch_date
                 }
             }
             

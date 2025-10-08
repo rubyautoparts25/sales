@@ -47,15 +47,26 @@ function addProductToCart(product){
 
 async function addScannedItem(code){
   try{
-    const{data,error}=await supabase.from('active_inventory').select('*').eq('barcode',code).single()
+    const{data,error}=await supabase().from('inventory').select(`
+      barcode,
+      quantity_active,
+      products!inner(
+        id,
+        part_name,
+        price
+      )
+    `).eq('barcode',code).gt('quantity_active',0).single()
+    
     if(error||!data){alert("Product not found or no active stock");return}
-    if(data.total_active<=0){alert("No active stock available");return}
-    const existingIndex=cart.findIndex(item=>item.id===data.id)
+    if(data.quantity_active<=0){alert("No active stock available");return}
+    
+    const product = data.products
+    const existingIndex=cart.findIndex(item=>item.id===product.id)
     if(existingIndex!==-1){
-      if(cart[existingIndex].qty+1>data.total_active){alert("Not enough active stock");return}
+      if(cart[existingIndex].qty+1>data.quantity_active){alert("Not enough active stock");return}
       cart[existingIndex].qty+=1
     }else{
-      cart.push({id:data.id,name:data.part_name,price:data.price,qty:1,active:data.total_active})
+      cart.push({id:product.id,name:product.part_name,price:product.price,qty:1,active:data.quantity_active})
     }
     renderCart()
     billPrinted=false // Reset print flag when cart changes
@@ -114,7 +125,7 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
   
   const total=cart.reduce((sum,i)=>sum+(i.price*i.qty),0)
   try{
-    const{data:bill,error:billErr}=await supabase.from('bills').insert([{
+    const{data:bill,error:billErr}=await supabase().from('bills').insert([{
       customer_name:customer.name,
       customer_phone:customer.phone,
       total_amount:total
@@ -123,7 +134,7 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
     
     for(const item of cart){
       // Create sale record
-      const{error:saleError}=await supabase.from("sales").insert({
+      const{error:saleError}=await supabase().from("sales").insert({
         product_id:item.id,
         quantity_sold:item.qty,
         bill_id:bill.id,
@@ -132,7 +143,7 @@ document.getElementById('finalizeBill').addEventListener('click',async()=>{
       if(saleError)console.error("Sale insert error:",saleError)
       
       // Use the database function to sell inventory (FIFO)
-      const{error:sellError}=await supabase.rpc('sell_inventory', {
+      const{error:sellError}=await supabase().rpc('sell_inventory', {
         p_product_id: item.id,
         p_quantity: item.qty,
         p_price: item.price,

@@ -5,8 +5,22 @@ import { createClient } from '@supabase/supabase-js'
 import { getSupabaseConfig } from '../supabase.config.js'
 
 // Initialize Supabase client with environment variable configuration
-const config = getSupabaseConfig()
-const supabase = createClient(config.url, config.anonKey)
+let supabase = null;
+
+function getSupabaseClient() {
+  if (!supabase) {
+    // Use hardcoded values for now to test
+    const url = 'https://aknhtapidbkwksvjsqsu.supabase.co';
+    const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrbmh0YXBpZGJrd2tzdmpzcXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTMxMzgsImV4cCI6MjA3Mzg4OTEzOH0.l3oaU9sO1HfTpLKI8xkl0gikIofmYdmW3sYKJHq3zVE';
+    
+    console.log('Initializing Supabase with hardcoded values');
+    console.log('URL:', url);
+    console.log('Key (first 20 chars):', anonKey.substring(0, 20) + '...');
+    
+    supabase = createClient(url, anonKey);
+  }
+  return supabase;
+}
 
 // Barcode generation
 export function generateRandomBarcode() {
@@ -19,7 +33,7 @@ export function generateRandomBarcode() {
 }
 
 export async function barcodeExists(barcode) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('inventory')
     .select('id')
     .eq('barcode', barcode)
@@ -48,7 +62,7 @@ export async function createBatch(vendorName, vendorInvoice) {
   const batchId = `${vendorInvoice}-${vendorName}-${Date.now()}`;
   const now = new Date();
   
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('batches')
     .insert([{
       batch_id: batchId,
@@ -66,7 +80,7 @@ export async function createBatch(vendorName, vendorInvoice) {
 }
 
 export async function getBatch(batchId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('batches')
     .select('*')
     .eq('id', batchId)
@@ -78,7 +92,7 @@ export async function getBatch(batchId) {
 
 // Product operations
 export async function createProduct(productDetails, barcode) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('products')
     .insert([{
       part_name: productDetails.part_name,
@@ -98,7 +112,7 @@ export async function createProduct(productDetails, barcode) {
 }
 
 export async function findProduct(productDetails) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('products')
     .select('*')
     .eq('part_name', productDetails.part_name)
@@ -115,7 +129,7 @@ export async function findProduct(productDetails) {
 }
 
 export async function getProductByBarcode(barcode) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('products')
     .select('*')
     .eq('barcode', barcode)
@@ -128,7 +142,7 @@ export async function getProductByBarcode(barcode) {
 // Inventory operations
 export async function addInventory(productId, batchId, quantity, expiryDate = null) {
   // Use the database function to generate unique barcode
-  const { data, error } = await supabase.rpc('add_inventory_with_barcode', {
+  const { data, error } = await getSupabaseClient().rpc('add_inventory_with_barcode', {
     p_product_id: productId,
     p_batch_id: batchId,
     p_quantity: quantity,
@@ -140,7 +154,7 @@ export async function addInventory(productId, batchId, quantity, expiryDate = nu
 }
 
 export async function activateInventory(productId, quantity, batchId = null) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .rpc('activate_inventory', {
       p_product_id: productId,
       p_quantity: quantity,
@@ -152,7 +166,7 @@ export async function activateInventory(productId, quantity, batchId = null) {
 }
 
 export async function sellInventory(productId, quantity, price, billId = null) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .rpc('sell_inventory', {
       p_product_id: productId,
       p_quantity: quantity,
@@ -166,7 +180,7 @@ export async function sellInventory(productId, quantity, price, billId = null) {
 
 // Query operations
 export async function loadInventory() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('inventory_summary')
     .select('*')
     .order('part_name');
@@ -176,7 +190,7 @@ export async function loadInventory() {
 }
 
 export async function loadActiveInventory() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('active_inventory')
     .select('*')
     .order('part_name');
@@ -186,7 +200,7 @@ export async function loadActiveInventory() {
 }
 
 export async function loadOnholdInventory() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('onhold_inventory')
     .select('*')
     .order('part_name');
@@ -196,7 +210,7 @@ export async function loadOnholdInventory() {
 }
 
 export async function searchProducts(query) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('products')
     .select('*')
     .or(`part_name.ilike.%${query}%,variant.ilike.%${query}%`)
@@ -208,7 +222,7 @@ export async function searchProducts(query) {
 
 // Sales operations
 export async function createBill(customerName, customerPhone, totalAmount) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('bills')
     .insert([{
       customer_name: customerName,
@@ -224,7 +238,7 @@ export async function createBill(customerName, customerPhone, totalAmount) {
 
 // Supplier operations
 export async function addSupplier(supplierData) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('suppliers')
     .insert([supplierData])
     .select()
@@ -235,7 +249,7 @@ export async function addSupplier(supplierData) {
 }
 
 export async function loadSuppliers() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('suppliers')
     .select('*')
     .order('supply_date', { ascending: false });
@@ -246,7 +260,7 @@ export async function loadSuppliers() {
 
 // Utility functions
 export async function deleteProduct(productId) {
-  const { error } = await supabase
+  const { error } = await getSupabaseClient()
     .from('products')
     .delete()
     .eq('id', productId);
@@ -256,7 +270,7 @@ export async function deleteProduct(productId) {
 }
 
 export async function updateProduct(productId, updates) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('products')
     .update(updates)
     .eq('id', productId)
@@ -269,11 +283,28 @@ export async function updateProduct(productId, updates) {
 
 // Get barcode information for a specific inventory item
 export async function getBarcodeInfo(barcode) {
-  const { data, error } = await supabase
-    .from('batch_details')
-    .select('*')
-    .eq('barcode', barcode)
-    .single();
+  const { data, error } = await getSupabaseClient()
+    .from('inventory')
+    .select(`
+      barcode,
+      quantity_on_hold,
+      quantity_active,
+      expiry_date,
+      products!inner(
+        part_name,
+        variant,
+        brand,
+        class,
+        price
+      ),
+      batches!inner(
+        batch_id,
+        batch_date,
+        vendor_name,
+        vendor_invoice
+      )
+    `)
+    .eq('barcode', barcode);
 
   if (error) throw error;
   return data;
@@ -281,7 +312,7 @@ export async function getBarcodeInfo(barcode) {
 
 // Get all barcodes for a specific product
 export async function getProductBarcodes(productId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('inventory')
     .select(`
       barcode,
@@ -304,7 +335,7 @@ export async function getProductBarcodes(productId) {
 
 // Get only active barcodes for a specific product
 export async function getActiveProductBarcodes(productId) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('inventory')
     .select(`
       barcode,
@@ -327,4 +358,4 @@ export async function getActiveProductBarcodes(productId) {
 }
 
 // Export the supabase client for direct use if needed
-export { supabase };
+export { getSupabaseClient as supabase };
