@@ -63,11 +63,17 @@ async function handleScan() {
         scanBtn.disabled = true
         
         // Look up barcode in database
-        const barcodeInfo = await getBarcodeInfo(barcode)
+        let barcodeInfo = null
+        try {
+            barcodeInfo = await getBarcodeInfo(barcode)
+        } catch (error) {
+            // Barcode not found - this is expected for missing items
+            barcodeInfo = null
+        }
         
-        if (barcodeInfo && barcodeInfo.length > 0) {
+        if (barcodeInfo && barcodeInfo.barcode) {
             // Item found in database
-            const item = barcodeInfo[0]
+            const item = barcodeInfo
             const totalQuantity = item.quantity_active + item.quantity_on_hold
             const scannedCount = scannedCounts.get(barcode)
             
